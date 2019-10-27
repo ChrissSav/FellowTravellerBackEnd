@@ -40,30 +40,23 @@ app.post('api/adduser', (req,res) => {
 });
 
 
-app.post('/adduser/:pr_id/:str_id', (req, res) => {
+app.post('/adduser/:name/:email/:password', (req, res) => {
     
-	db.query("INSERT INTO fellowtraveller.users (id, username) VALUES (?,?)", [req.params.pr_id, req.params.str_id],
+	db.query("INSERT INTO fellowtraveller.users (name, email, password) VALUES (?,?,?)", [req.params.name, req.params.email,req.params.password],
 	(err, result) => {
-
-		if (err || result == 0)
-			res.send(error_handling("Could not retrieve prices for the given product or store"));
-		else
-			res.send(result[0]);
+        if (err || result == 0){
+            res.send(err);
+            console.log(err);
+        }
+		else{
+            res.send(result[0]);
+            console.log(result[0]);
+        }
 
 	});
 });
 
 
-app.get('/getuser/:id', (req,res) => {
-   db.query('SELECT * FROM fellowtraveller.users where id = ?',[req.params.id],(err,rows,fields) => {
-       if(!err){
-           res.send(rows);
-       }
-       else{
-           console.log(err);
-       }
-   })
-});
 
 app.get('/api/getuser/:id', (req, res) => {
 	db.query('SELECT * FROM fellowtraveller.users where id = ?',[req.params.id],(err, result) => {
@@ -90,9 +83,25 @@ app.get('/getusers', (req,res) => {
     db.query('SELECT * FROM fellowtraveller.users ',(err,rows,fields) => {
         if(!err){
             res.send(rows);
+            console.log(rows);
+           
         }
         else{
             console.log(err);
         }
     })
- });
+ }); 
+ 
+
+ app.get('/getuser/:id',(req,res) => {
+    db.query('Select * from fellowtraveller.users where id = ?',[req.params.id],(error, result,field) => {
+        if(result.length > 0){
+            console.log("ok"); 
+            res.send(result);
+        }
+        else{
+            console.log("Error");
+            res.send("Error");
+        }
+    })
+});
