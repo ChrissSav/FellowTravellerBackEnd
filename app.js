@@ -94,14 +94,20 @@ app.get('/getusers', (req,res) => {
  
 
  app.get('/getuser/:id',(req,res) => {
-    db.query('Select * from fellowtraveller.users where id = ?',[req.params.id],(error, result,field) => {
+    db.query('Select * from fellowtraveller.users where email = ?',[req.params.id],(error, result,field) => {
         if(result.length > 0){
             console.log("ok"); 
-            res.send(result);
+            res.send("ok");
         }
         else{
-            console.log("Error");
-            res.send("Error");
+            let error_resp = {
+                status : 'good',
+                err_msg : 'good'
+              };
+            console.log("error_resp");
+            res.send("error_resp");
         }
     })
 });
+
+
