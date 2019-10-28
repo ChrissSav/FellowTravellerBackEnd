@@ -1,5 +1,6 @@
 const express = require('express');
 const mysql = require('mysql');
+let error_handling = require('./error_handling');
 
 const db = mysql.createConnection({
     host: 'localhost',
@@ -40,22 +41,6 @@ app.post('api/adduser', (req,res) => {
 });
 
 
-app.post('/adduser/:name/:email/:password', (req, res) => {
-    
-	db.query("INSERT INTO fellowtraveller.users (name, email, password) VALUES (?,?,?)", [req.params.name, req.params.email,req.params.password],
-	(err, result) => {
-        if (err || result == 0){
-            res.send(err);
-            console.log(err);
-        }
-		else{
-            res.send(result[0]);
-            console.log(result[0]);
-        }
-
-	});
-});
-
 
 
 app.get('/api/getuser/:id', (req, res) => {
@@ -94,20 +79,32 @@ app.get('/getusers', (req,res) => {
  
 
  app.get('/getuser/:id',(req,res) => {
-    db.query('Select * from fellowtraveller.users where email = ?',[req.params.id],(error, result,field) => {
+    db.query('Select * from fellowtraveller.users where email = ?',[req.params.id],(error, result) => {
         if(result.length > 0){
-            console.log("ok"); 
-            res.send("ok");
+            console.log("ok  == "); 
+            console.log(result); 
+            res.send(result);
         }
         else{
-            let error_resp = {
-                status : 'good',
-                err_msg : 'good'
-              };
-            console.log("error_resp");
-            res.send("error_resp");
+            console.log(error_handling("There is no user with these elements"));
+            res.send(error_handling("There is no user with these elements"));
         }
+        console.log("\n\n");
     })
 });
 
 
+
+app.get('/adduser/:name/:email/:password', (req, res) => { 
+	db.query("INSERT INTO fellowtraveller.users (name, email, password) VALUES (?,?,?)", [req.params.name, req.params.email,req.params.password],
+	(err, result) => {
+        if (err || result == 0){
+            res.send(error_handling("error"));
+            console.log(err);
+        }
+		else{
+            res.send(result);
+            console.log(result);
+        }
+	});
+});
