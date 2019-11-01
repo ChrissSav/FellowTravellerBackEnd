@@ -68,7 +68,7 @@ app.get('/getusers', (req,res) => {
     db.query('SELECT * FROM fellowtraveller.users ',(err,rows,fields) => {
         if(!err){
             res.send(rows);
-            console.log(rows);
+            console.log("/getusers");
            
         }
         else{
