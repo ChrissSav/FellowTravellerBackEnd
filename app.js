@@ -58,22 +58,20 @@ function checkUserIsInList(email) {
 
 
 
-
-app.get('/getusers', (req,res) => {
-    db.query('SELECT * FROM users ',(err,rows,fields) => {
-        if(!err){
-            res.send(rows);
-           // console.log("/getusers");        
+app.get('/users', (req,res) => {
+    db.query('SELECT * FROM users ',(err,result) => {
+        if (err || result == 0){
+            res.send(error_handling("Error to get users"));
         }
         else{
-            console.log(err);
+            res.send(result);
         }
     })
  }); 
 
 
 
- app.get('/getusers/:id',(req,res) => {
+ app.get('/users/:id',(req,res) => {
     db.query('Select * from users where email = ?',[req.params.id],(error, result) => {
         if(result.length > 0){
             console.log("ok  == "); 
@@ -90,7 +88,7 @@ app.get('/getusers', (req,res) => {
 
 
 
-app.get('/adduser/:name/:email/:password/:phone', (req, res) => { 
+app.get('/users/:name/:email/:password/:phone', (req, res) => { 
     let name = req.params.name;
     let password = req.params.password;
     let email = req.params.email;
@@ -125,7 +123,7 @@ app.get('/adduser/:name/:email/:password/:phone', (req, res) => {
 });
 
 
-app.get('/delete/:id',(req,res) => {
+app.delete('/users/:id',(req,res) => {
     db.query('DELETE FROM users where id = ?',[req.params.id],(err,rows, fields) => {
         if (err)
 			res.send('error');
@@ -133,3 +131,62 @@ app.get('/delete/:id',(req,res) => {
 			res.send('Delete succesfully');
     })
 });
+
+//======================trip========================
+app.get('/trips/:from/:to/:date/:time_dep/:time_arriv/:creator_id/', (req ,res) => {
+    let from = req.params.from;
+    let to = req.params.to;
+    let date = req.params.date;
+    let time_dep = req.params.time_dep;
+    let time_arriv = req.params.time_arriv;
+    let creator_id = req.params.creator_id;
+    //console.log("from = "+from+"  legth = "+from.length);
+    //console.log("to = "+to+"  legth = "+to.length);
+
+    if(from===" "){
+        res.send(error_handling("keni apo"));
+    }
+    else if(to===" "){
+        res.send(error_handling("keni pros "));
+    }
+    else if(date==="" || date===" "){
+        res.send(error_handling("keni hmerominia"));
+    }
+    else if(!validDate(date)){
+        res.send(error_handling("lathos imerominia prepei dd-mm-yyyy"));
+    }
+    else if (time_dep==="" || time_dep===" "){
+        res.send(error_handling("keni wra anaxwrisis"));
+    }
+    else if (!checkForm(time_dep)){
+        res.send(error_handling("lathos wra anaxwrisis HH:mm"));
+    }
+    else if (time_arriv==="" || time_arriv===" "){
+        res.send(error_handling("keni wra afiskis"));
+    }
+    else if (!checkForm(time_arriv)){
+        res.send(error_handling("lathos wra afiskis HH:mm"));
+    }
+    else{
+        res.send(from+"  "+to+"  "+date+"  "+time_dep+"  "+time_arriv+"  "+creator_id);
+    }
+    
+});
+
+function validDate(input){
+    var reg = /(0[1-9]|[12][0-9]|3[01])[- /.](0[1-9]|1[012])[- /.](19|20)\d\d/;
+    if (input.match(reg)) {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
+function checkForm(form){
+   var v = form.match(/^([01]?[0-9]|2[0-4]):[0-5][0-9]/);
+   if (v!==null){
+       return true;
+   }
+    return false;
+}
