@@ -1,6 +1,7 @@
 const express = require('express');
 const mysql = require('mysql');
 let error_handling = require('./error_handling');
+let success_handling = require('./success_handling');
 
 const db = mysql.createConnection({
     host: 'localhost',
@@ -27,59 +28,30 @@ app.listen('5000', () => {
 
 
 app.get('', (req,res) => {
-    res.send("ΡΕ Η εφαρμογη θα γινει ρεεεεεε");
+    res.send("Καλώ ήρθατε στο FellowTraveller");
 });
-
-app.post('api/adduser', (req,res) => {
-    let post = 'ggrg';
-    let sql = 'Insert into users set ?';
-    let queri = db.query(sql, post, (err, result) => {
-        if(err) throw err;
-        console.log(result);
-        res.send('Post ok');
-    })
-});
+ 
 
 
 
-
-app.get('/api/getuser/:id', (req, res) => {
-	db.query('SELECT * FROM fellowtraveller.users where id = ?',[req.params.id],(err, result) => {
-
-		if (err || result == 0)
-			res.send(error_handling("Could not retrieve prices for the given product or store"));
-		else
-			res.send(result);
-
-	});
-});
-
-app.get('/delete/:id',(req,res) => {
-    db.query('DELETE FROM fellowtraveller.users where id = ?',[req.params.id],(err,rows, fields) => {
-        if (err)
-			res.send('error');
-		else
-			res.send('Delete succesfully');
-    })
-});
-
-
+//=======================================================new===================================
+//------------------------Users-------------------------------
 app.get('/getusers', (req,res) => {
-    db.query('SELECT * FROM fellowtraveller.users ',(err,rows,fields) => {
+    db.query('SELECT * FROM users ',(err,rows,fields) => {
         if(!err){
             res.send(rows);
-            console.log("/getusers");
-           
+            console.log("/getusers");        
         }
         else{
             console.log(err);
         }
     })
  }); 
- 
 
- app.get('/getuser/:id',(req,res) => {
-    db.query('Select * from fellowtraveller.users where email = ?',[req.params.id],(error, result) => {
+
+
+ app.get('/getusers/:id',(req,res) => {
+    db.query('Select * from users where email = ?',[req.params.id],(error, result) => {
         if(result.length > 0){
             console.log("ok  == "); 
             console.log(result); 
@@ -95,8 +67,9 @@ app.get('/getusers', (req,res) => {
 
 
 
-app.get('/adduser/:name/:email/:password', (req, res) => { 
-	db.query("INSERT INTO fellowtraveller.users (name, email, password) VALUES (?,?,?)", [req.params.name, req.params.email,req.params.password],
+app.get('/adduser/:name/:email/:password/:phone', (req, res) => { 
+    db.query("INSERT INTO users (name, email, password,phone) VALUES (?,?,?,?)", 
+    [req.params.name, req.params.email,req.params.password,req.params.phone],
 	(err, result) => {
         if (err || result == 0){
             res.send(error_handling("error"));
@@ -106,5 +79,17 @@ app.get('/adduser/:name/:email/:password', (req, res) => {
             res.send(result);
             console.log(result);
         }
-	});
+    });
+    //var result = req.params.name+"     "+req.params.email+"     "+req.params.password;
+   // res.send(result);
+});
+
+
+app.get('/delete/:id',(req,res) => {
+    db.query('DELETE FROM users where id = ?',[req.params.id],(err,rows, fields) => {
+        if (err)
+			res.send('error');
+		else
+			res.send('Delete succesfully');
+    })
 });
