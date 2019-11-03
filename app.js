@@ -3,6 +3,13 @@ const mysql = require('mysql');
 let error_handling = require('./error_handling');
 let success_handling = require('./success_handling');
 
+function validateEmail(email) {
+    var re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+    return re.test(String(email).toLowerCase());
+}
+
+
+
 const db = mysql.createConnection({
     host: 'localhost',
     user: 'root',
@@ -36,11 +43,27 @@ app.get('', (req,res) => {
 
 //=======================================================new===================================
 //------------------------Users-------------------------------
+
+function checkUserIsInList(email) {
+    db.query('Select * from users where email = ?',[email],(err, result) => {
+        if (err || result == 0){
+            return false;  
+        }
+		else{
+            return true;
+        }
+    });
+}
+
+
+
+
+
 app.get('/getusers', (req,res) => {
     db.query('SELECT * FROM users ',(err,rows,fields) => {
         if(!err){
             res.send(rows);
-            console.log("/getusers");        
+           // console.log("/getusers");        
         }
         else{
             console.log(err);
@@ -68,20 +91,37 @@ app.get('/getusers', (req,res) => {
 
 
 app.get('/adduser/:name/:email/:password/:phone', (req, res) => { 
-    db.query("INSERT INTO users (name, email, password,phone) VALUES (?,?,?,?)", 
-    [req.params.name, req.params.email,req.params.password,req.params.phone],
-	(err, result) => {
-        if (err || result == 0){
-            res.send(error_handling("error"));
-            console.log(err);
-        }
-		else{
-            res.send(result);
-            console.log(result);
-        }
-    });
-    //var result = req.params.name+"     "+req.params.email+"     "+req.params.password;
-   // res.send(result);
+    let name = req.params.name;
+    let password = req.params.password;
+    let email = req.params.email;
+    let phone = req.params.phone;
+    if(phone.length!=10){
+        res.send(error_handling("to til prepei na einai 10 noymera"));
+    }
+    else if(phone[0]!=='6' || phone[1]!=='9'){
+        res.send(error_handling("to til prepei na arxizei apo 69"));
+    }
+    else if(email.length==0){
+        res.send(error_handling("Email einai keno"));
+    }
+    else if(!validateEmail(email)){
+        res.send(error_handling("lahtos email"));
+    }
+    if(!checkUserIsInList(email)){
+        res.send(error_handling("yparxei xristi me auto to email"));
+    }
+    else{
+        db.query("INSERT INTO fellowtraveller.users (name, email, password,phone) VALUES (?,?,?,?)", 
+        [name, email,password,phone],(err, result) => {
+            if (err || result == 0){
+                console.log(err.sqlMessage);
+                res.send(error_handling("error"));
+            }
+		    else{
+                res.send(success_handling("succes user add USER WITH NAME ="+name));
+            }
+        });
+    }
 });
 
 

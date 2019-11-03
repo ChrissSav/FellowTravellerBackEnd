@@ -1,5 +1,5 @@
 let success_resp = {
-    status : 'susccess',
+    status : 'success',
     msg : 'Success status'
   };
   
