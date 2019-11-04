@@ -190,3 +190,47 @@ function checkForm(form){
    }
     return false;
 }
+
+
+function registerRate(user_id,target_id,num_of_stars,type){
+    db.query("INSERT INTO reating (user_id, target_id, num_of_stars,type) VALUES (?,?,?,?)", 
+        [user_id, target_id,num_of_starts,type],(err, result) => {
+            if (err || result == 0){
+                console.log(error_handling("Error in add rating"));
+                res.send(error_handling("error"));
+            }
+		    else{
+                res.send(success_handling("succes rating"));
+            }
+    });
+}
+//==================RAting=====================
+app.get('/trips/:user_id/:target_id/:num_of_stars/:type', (req ,res) => {
+    let user_id = req.params.user_id;
+    let target_id = req.params.target_id;
+    let num_of_stars = req.params.num_of_stars;
+    let type = req.params.type;
+
+    if(user_id===" " || user_id===""){
+        res.send(error_handling("keno user_id"));
+    }
+    else if(!isNaN(user_id)){
+        res.send(error_handling("to user_id den einai arithmos"));
+    }
+    else if(target_id===" " || target_id===""){
+        res.send(error_handling("keno target_id "));
+    }
+    else if(!isNaN(target_id)){
+        res.send(error_handling("To target_id den einai arithmos"));
+    }
+    else if(num_of_stars==="" || num_of_stars===" "){
+        res.send(error_handling("keno pedio num_of_stars"));
+    }
+    else if(type==="" || type===" "){
+        res.send(error_handling("keno pedio type"));
+    }
+    else{
+        res.send(user_id+"  "+target_id+"  "+num_of_stars+"  "+type);
+    }
+    
+});
