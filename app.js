@@ -247,6 +247,18 @@ app.get('/trips/:user_id/:target_id/:num_of_stars/:type', (req ,res) => {
     }
     else{
         registerRate(user_id,target_id,num_of_stars,type,res);
-        res.send(user_id+"  "+target_id+"  "+num_of_stars+"  "+type);
+       // res.send(user_id+"  "+target_id+"  "+num_of_stars+"  "+type);
     }
 });
+
+//=====fuction check if exist in table==============
+function checkIfExistInTable(table,key,id){
+    db.query("select * from "+table+" where "+key+"="+id,(err, result) => {
+        if (err || result == 0){
+            return false;
+        }
+        else{
+            return true;
+        }
+    });
+}
