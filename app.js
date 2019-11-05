@@ -168,7 +168,8 @@ app.get('/trips/:from/:to/:date/:time_dep/:time_arriv/:creator_id/', (req ,res) 
         res.send(error_handling("lathos wra afiskis HH:mm"));
     }
     else{
-        res.send(from+"  "+to+"  "+date+"  "+time_dep+"  "+time_arriv+"  "+creator_id);
+        registerTrip(from,to,date,time_dep,time_arriv,creator_id,res);
+        //res.send(from+"  "+to+"  "+date+"  "+time_dep+"  "+time_arriv+"  "+creator_id);
     }
     
 });
@@ -189,6 +190,21 @@ function checkForm(form){
        return true;
    }
     return false;
+}
+
+
+
+function registerTrip(from,to,date,time_dep,time_arriv,creator_id,res){
+    db.query("INSERT INTO trips (from, to, date_departure,time_depsrture,time_arrivals,creator_id) VALUES (?,?,?,?,?,?)", 
+        [from, to,date,time_dep,time_arriv,creator_id],(err, result) => {
+            if (err || result == 0){
+                console.log(error_handling("Error in add trip"));
+                res.send(error_handling("error"));
+            }
+		    else{
+                res.send(success_handling("succes add trip"));
+            }
+    });
 }
 
 
