@@ -208,9 +208,9 @@ function registerTrip(from,to,date,time_dep,time_arriv,creator_id,res){
 }
 
 
-function registerRate(user_id,target_id,num_of_stars,type){
+function registerRate(user_id,target_id,num_of_stars,type,res){
     db.query("INSERT INTO reating (user_id, target_id, num_of_stars,type) VALUES (?,?,?,?)", 
-        [user_id, target_id,num_of_starts,type],(err, result) => {
+        [user_id, target_id,num_of_stars,type],(err, result) => {
             if (err || result == 0){
                 console.log(error_handling("Error in add rating"));
                 res.send(error_handling("error"));
@@ -246,7 +246,7 @@ app.get('/trips/:user_id/:target_id/:num_of_stars/:type', (req ,res) => {
         res.send(error_handling("keno pedio type"));
     }
     else{
-        registerRate(user_id,target_id,num_of_stars,type);
+        registerRate(user_id,target_id,num_of_stars,type,res);
         res.send(user_id+"  "+target_id+"  "+num_of_stars+"  "+type);
     }
 });
