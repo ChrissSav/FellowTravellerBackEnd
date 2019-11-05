@@ -230,7 +230,7 @@ app.get('/trips/:user_id/:target_id/:num_of_stars/:type', (req ,res) => {
         res.send(error_handling("keno pedio type"));
     }
     else{
+        registerRate(user_id,target_id,num_of_stars,type);
         res.send(user_id+"  "+target_id+"  "+num_of_stars+"  "+type);
     }
-    
 });
