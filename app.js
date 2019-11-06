@@ -82,7 +82,6 @@ app.get('/users', (req,res) => {
             console.log(error_handling("There is no user with these elements"));
             res.send(error_handling("There is no user with these elements"));
         }
-        console.log("\n\n");
     })
 });
 
@@ -105,7 +104,7 @@ app.get('/users/:name/:email/:password/:phone', (req, res) => {
     else if(!validateEmail(email)){
         res.send(error_handling("lahtos email"));
     }
-    if(!checkUserIsInList(email)){
+    else if(!checkIfExistInTable("users","email",email)){
         res.send(error_handling("yparxei xristi me auto to email"));
     }
     else{
@@ -262,3 +261,4 @@ function checkIfExistInTable(table,key,id){
         }
     });
 }
+//====================================================
