@@ -35,7 +35,7 @@ app.listen('5000', () => {
 
 
 app.get('', (req,res) => {
-    res.send("Καλώ ήρθατε στο FellowTraveller");
+    res.send("Καλώ ήρθατε στο Api του FellowTraveller");
 });
  
 
@@ -108,7 +108,7 @@ app.get('/users/:name/:email/:password/:phone', (req, res) => {
         res.send(error_handling("yparxei xristi me auto to email"));
     }
     else{
-        db.query("INSERT INTO fellowtraveller.users (name, email, password,phone) VALUES (?,?,?,?)", 
+        db.query("INSERT INTO users (name, email, password,phone) VALUES (?,?,?,?)", 
         [name, email,password,phone],(err, result) => {
             if (err || result == 0){
                 console.log(err.sqlMessage);
@@ -194,7 +194,7 @@ function checkForm(form){
 
 
 function registerTrip(from,to,date,time_dep,time_arriv,creator_id,res){
-    db.query("INSERT INTO trips (from, to, date_departure,time_depsrture,time_arrivals,creator_id) VALUES (?,?,?,?,?,?)", 
+    db.query("INSERT INTO trips (ffrom, tto, date_departure,time_depsrture,time_arrivals,creator_id) VALUES (?,?,?,?,?,?)", 
         [from, to,date,time_dep,time_arriv,creator_id],(err, result) => {
             if (err || result == 0){
                 console.log(error_handling("Error in add trip"));
@@ -262,3 +262,34 @@ function checkIfExistInTable(table,key,id){
     });
 }
 //====================================================
+
+//=============Trip and Passenger Relationship=======
+
+function AddUserToTrip(user_id,trip_id){
+    if (checkIfExistInTable("users","id",user_id)){
+        return "users does't exist";
+    }
+    else if (checkIfExistInTable("trips","id",trip_id)){
+        return "trip does't exist"
+    }
+    else{   
+        
+    }
+}
+
+
+function getTripCurrentNumOfPassenger(trip_id){
+    let num = 0;
+    db.query("select current_num from trips where id = ?",[trip_id],(err, result) => {
+        if (err || result == 0){
+            num = -1;
+        }
+        else{
+            num = result[0].current_num;
+        }
+    });
+    return num;
+}
+
+
+
