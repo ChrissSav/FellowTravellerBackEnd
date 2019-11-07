@@ -291,5 +291,16 @@ function getTripCurrentNumOfPassenger(trip_id){
     return num;
 }
 
+function UpdateCurrentNumOFTrip(trip_id){
+    let num = getTripCurrentNumOfPassenger(trip_id);
+    db.query("update trips set current_num =? where id =?",[num,trip_id],(err, result) => {
+        if (err || result == 0){
+            return false;
+        }
+        else{
+            return true;
+        }
+    });
+}
 
 
