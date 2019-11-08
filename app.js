@@ -250,34 +250,38 @@ app.get('/trips/:user_id/:target_id/:num_of_stars/:type', (req ,res) => {
     }
 });
 
-//=====fuction check if exist in table==============
+//=====fuction check if exist in table=============
 function checkIfExistInTable(table,key,id){
-    db.query("select * from "+table+" where "+key+"="+id,(err, result) => {
-        if (err || result == 0){
-            return false;
-        }
-        else{
-            return true;
-        }
-    });
+    const q = "select * from "+table+" where "+key+"="+id;
+    return new Promise((resolve,reject)=>{
+        db.query(q, function (err, result) {
+            if (err  || result.length==0){  
+                resolve (false);
+            }else{ 
+                resolve(true);
+            } 
+        })
+    })
 }
-//====================================================
 
 //=============Trip and Passenger Relationship=======
+app.get('/b/:us/:id', async (req ,res) => {
+    res.send("mpika");
+    AddUserToTrip(req.params.us,req.params.id);
+});
 
-function AddUserToTrip(user_id,trip_id){
-    if (checkIfExistInTable("users","id",user_id)){
-        return "users does't exist";
+
+async function AddUserToTrip(user_id,trip_id){
+    try{
+        const res1 = await checkIfExistInTable("users", "id", user_id);
+        console.log(res1);
+        const res2 = await checkIfExistInTable("trips", "id", trip_id);
+        console.log(res2);
+    }catch (err){
+        console.log(err);
     }
-    else if (checkIfExistInTable("trips","id",trip_id)){
-        return "trip does't exist"
-    }
-    else{   
-        
-    }
+    
 }
-
-
 function getTripCurrentNumOfPassenger(trip_id){
     let num = 0;
     db.query("select current_num from trips where id = ?",[trip_id],(err, result) => {
