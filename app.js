@@ -92,6 +92,10 @@ app.get('/users/:name/:email/:password/:phone', (req, res) => {
     let password = req.params.password;
     let email = req.params.email;
     let phone = req.params.phone;
+    AddUserr(name,email,password,phone,res);
+});
+
+async function AddUserr(name,email,password,phone,res){
     if(phone.length!=10){
         res.send(error_handling("to til prepei na einai 10 noymera"));
     }
@@ -104,7 +108,7 @@ app.get('/users/:name/:email/:password/:phone', (req, res) => {
     else if(!validateEmail(email)){
         res.send(error_handling("lahtos email"));
     }
-    else if(checkIfExistInTable("users","email",email)){
+    else if(await check("users","email",email)){
         res.send(error_handling("yparxei xristi me auto to email"));
     }
     else{
@@ -119,9 +123,7 @@ app.get('/users/:name/:email/:password/:phone', (req, res) => {
             }
         });
     }
-});
-
-
+}
 app.delete('/users/:id',(req,res) => {
     db.query('DELETE FROM users where id = ?',[req.params.id],(err,rows, fields) => {
         if (err)
@@ -253,9 +255,10 @@ app.get('/trips/:user_id/:target_id/:num_of_stars/:type', (req ,res) => {
 //=====fuction check if exist in table=============
 function checkIfExistInTable(table,key,id){
     const q = "select * from "+table+" where "+key+"="+id;
+    console.log(q);
     return new Promise((resolve,reject)=>{
         db.query(q, function (err, result) {
-            if (err  || result.length==0){  
+            if (err  || result.length==0){ 
                 resolve (false);
             }else{ 
                 resolve(true);
@@ -270,6 +273,15 @@ app.get('/b/:us/:id', async (req ,res) => {
     AddUserToTrip(req.params.us,req.params.id);
 });
 
+async function check(table,key,id){
+    try{
+        const flag = await checkIfExistInTable(table, key, id);
+        return flag;
+    }catch (err){
+        console.log(err);
+    }
+    
+}
 
 async function AddUserToTrip(user_id,trip_id){
     try{
