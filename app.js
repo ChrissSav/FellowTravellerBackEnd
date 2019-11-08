@@ -104,7 +104,7 @@ app.get('/users/:name/:email/:password/:phone', (req, res) => {
     else if(!validateEmail(email)){
         res.send(error_handling("lahtos email"));
     }
-    else if(!checkIfExistInTable("users","email",email)){
+    else if(checkIfExistInTable("users","email",email)){
         res.send(error_handling("yparxei xristi me auto to email"));
     }
     else{
