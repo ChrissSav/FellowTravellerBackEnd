@@ -279,7 +279,6 @@ async function check(table,key,id){
     }catch (err){
         console.log(err);
     }
-    
 }
 
 async function AddUserToTrip(user_id,trip_id,res){
