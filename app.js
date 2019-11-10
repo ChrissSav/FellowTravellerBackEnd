@@ -304,17 +304,30 @@ async function AddUserToTrip(user_id,trip_id,res){
     }
     
 }
+
+app.get('/b/:id',async  (req ,res) => {
+    let l = await getTripCurrentNumOfPassenger(req.params.id);
+    console.log(l);
+    res.send(success_handling(l+""));
+});
+
 function getTripCurrentNumOfPassenger(trip_id){
-    let num = 0;
-    db.query("select current_num from trips where id = ?",[trip_id],(err, result) => {
-        if (err || result == 0){
-            num = -1;
-        }
-        else{
-            num = result[0].current_num;
-        }
+    let num;
+    let q = "select current_num from trips where id ="+trip_id;
+    return new Promise((resolve,reject)=>{
+        db.query(q,(err, result) => {
+            if (err || result == 0){
+              //  console.log("num = -1;")
+                num = -1;
+                resolve(num);
+            }
+            else{
+               // console.log("num = result[0].current_num;")
+                num = result[0].current_num;
+                resolve(num);
+            } 
+        })
     });
-    return num;
 }
 
 function UpdateCurrentNumOFTrip(trip_id){
