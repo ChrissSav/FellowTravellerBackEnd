@@ -255,7 +255,7 @@ app.get('/trips/:user_id/:target_id/:num_of_stars/:type', (req ,res) => {
 //=====fuction check if exist in table=============
 function checkIfExistInTable(table,key,id){
     const q = "select * from "+table+" where "+key+"="+id;
-    console.log(q);
+   // console.log(q)
     return new Promise((resolve,reject)=>{
         db.query(q, function (err, result) {
             if (err  || result.length==0){ 
@@ -269,8 +269,7 @@ function checkIfExistInTable(table,key,id){
 
 //=============Trip and Passenger Relationship=======
 app.get('/b/:us/:id', async (req ,res) => {
-    res.send("mpika");
-    AddUserToTrip(req.params.us,req.params.id);
+    await AddUserToTrip(req.params.us,req.params.id,res);
 });
 
 async function check(table,key,id){
@@ -283,12 +282,28 @@ async function check(table,key,id){
     
 }
 
-async function AddUserToTrip(user_id,trip_id){
+async function AddUserToTrip(user_id,trip_id,res){
+    
     try{
+      //  console.log(user_id,trip_id);
         const res1 = await checkIfExistInTable("users", "id", user_id);
-        console.log(res1);
-        const res2 = await checkIfExistInTable("trips", "id", trip_id);
-        console.log(res2);
+       /// console.log("res1 = "+res1);
+        if (res1==false){
+           // console.log(error_handling("Erro in user_id"));
+            res.send(error_handling("Erro in user_id"));
+        }
+        else{
+            const res2 = await checkIfExistInTable("trips", "id", trip_id);
+           // console.log("res2 = "+res2);
+            if(res2==false){
+             //   console.log(error_handling("Erro in trip_id"));
+                res.send(error_handling("Erro in trip_id"));
+            }
+            else{
+             //   console.log(success_handling("Secces"));
+                res.send(success_handling("Succes"));
+            }
+        }  
     }catch (err){
         console.log(err);
     }
