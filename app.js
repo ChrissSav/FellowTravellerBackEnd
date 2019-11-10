@@ -3,10 +3,7 @@ const mysql = require('mysql');
 let error_handling = require('./error_handling');
 let success_handling = require('./success_handling');
 
-function validateEmail(email) {
-    var re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
-    return re.test(String(email).toLowerCase());
-}
+
 
 
 
@@ -38,7 +35,54 @@ app.get('', (req,res) => {
     res.send("Καλώ ήρθατε στο Api του FellowTraveller");
 });
  
+//---------------------Global fuctions-------------------------------------
+function validDate(input){
+    var reg = /(0[1-9]|[12][0-9]|3[01])[- /.](0[1-9]|1[012])[- /.](19|20)\d\d/;
+    if (input.match(reg)) {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
 
+function checkTime(form){
+   var v = form.match(/^([01]?[0-9]|2[0-4]):[0-5][0-9]/);
+   if (v!==null){
+       return true;
+   }
+    return false;
+}
+
+function validateEmail(email) {
+    var re = /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+    return re.test(String(email).toLowerCase());
+}
+async function check(table,key,id){
+    try{
+        const flag = await checkIfExistInTable(table, key, id);
+        return flag;
+    }catch (err){
+        console.log(err);
+    }
+}
+
+
+//=====fuction check if exist in table=============
+function checkIfExistInTable(table,key,id){
+    const q = "select * from "+table+" where "+key+"="+id;
+   // console.log(q)
+    return new Promise((resolve,reject)=>{
+        db.query(q, function (err, result) {
+            if (err  || result.length==0){ 
+                resolve (false);
+            }else{ 
+                resolve(true);
+            } 
+        })
+    })
+}
+//---------------------End Global fuctions-------------------------------------
 
 
 //=======================================================new===================================
@@ -133,7 +177,7 @@ app.delete('/users/:id',(req,res) => {
     })
 });
 
-//======================trip========================
+//======================TripS========================
 app.get('/trips/:from/:to/:date/:time_dep/:time_arriv/:creator_id/', (req ,res) => {
     let from = req.params.from;
     let to = req.params.to;
@@ -159,13 +203,13 @@ app.get('/trips/:from/:to/:date/:time_dep/:time_arriv/:creator_id/', (req ,res) 
     else if (time_dep==="" || time_dep===" "){
         res.send(error_handling("keni wra anaxwrisis"));
     }
-    else if (!checkForm(time_dep)){
+    else if (!checkTime(time_dep)){
         res.send(error_handling("lathos wra anaxwrisis HH:mm"));
     }
     else if (time_arriv==="" || time_arriv===" "){
         res.send(error_handling("keni wra afiskis"));
     }
-    else if (!checkForm(time_arriv)){
+    else if (!checkTime(time_arriv)){
         res.send(error_handling("lathos wra afiskis HH:mm"));
     }
     else{
@@ -175,23 +219,6 @@ app.get('/trips/:from/:to/:date/:time_dep/:time_arriv/:creator_id/', (req ,res) 
     
 });
 
-function validDate(input){
-    var reg = /(0[1-9]|[12][0-9]|3[01])[- /.](0[1-9]|1[012])[- /.](19|20)\d\d/;
-    if (input.match(reg)) {
-        return true;
-    }
-    else {
-        return false;
-    }
-}
-
-function checkForm(form){
-   var v = form.match(/^([01]?[0-9]|2[0-4]):[0-5][0-9]/);
-   if (v!==null){
-       return true;
-   }
-    return false;
-}
 
 
 
@@ -209,19 +236,8 @@ function registerTrip(from,to,date,time_dep,time_arriv,creator_id,res){
 }
 
 
-function registerRate(user_id,target_id,num_of_stars,type,res){
-    db.query("INSERT INTO reating (user_id, target_id, num_of_stars,type) VALUES (?,?,?,?)", 
-        [user_id, target_id,num_of_stars,type],(err, result) => {
-            if (err || result == 0){
-                console.log(error_handling("Error in add rating"));
-                res.send(error_handling("error"));
-            }
-		    else{
-                res.send(success_handling("succes rating"));
-            }
-    });
-}
-//==================RAting=====================
+
+//==================Rating=====================
 app.get('/trips/:user_id/:target_id/:num_of_stars/:type', (req ,res) => {
     let user_id = req.params.user_id;
     let target_id = req.params.target_id;
@@ -252,34 +268,14 @@ app.get('/trips/:user_id/:target_id/:num_of_stars/:type', (req ,res) => {
     }
 });
 
-//=====fuction check if exist in table=============
-function checkIfExistInTable(table,key,id){
-    const q = "select * from "+table+" where "+key+"="+id;
-   // console.log(q)
-    return new Promise((resolve,reject)=>{
-        db.query(q, function (err, result) {
-            if (err  || result.length==0){ 
-                resolve (false);
-            }else{ 
-                resolve(true);
-            } 
-        })
-    })
-}
+
 
 //=============Trip and Passenger Relationship=======
 app.get('/b/:us/:id', async (req ,res) => {
     await AddUserToTrip(req.params.us,req.params.id,res);
 });
 
-async function check(table,key,id){
-    try{
-        const flag = await checkIfExistInTable(table, key, id);
-        return flag;
-    }catch (err){
-        console.log(err);
-    }
-}
+
 
 async function AddUserToTrip(user_id,trip_id,res){
     
@@ -334,3 +330,49 @@ function UpdateCurrentNumOFTrip(trip_id){
 }
 
 
+
+//==================Rating=====================
+app.get('/trips/:user_id/:target_id/:num_of_stars/:type', (req ,res) => {
+    let user_id = req.params.user_id;
+    let target_id = req.params.target_id;
+    let num_of_stars = req.params.num_of_stars;
+    let type = req.params.type;
+
+    if(user_id===" " || user_id===""){
+        res.send(error_handling("keno user_id"));
+    }
+    else if(!isNaN(user_id)){
+        res.send(error_handling("to user_id den einai arithmos"));
+    }
+    else if(target_id===" " || target_id===""){
+        res.send(error_handling("keno target_id "));
+    }
+    else if(!isNaN(target_id)){
+        res.send(error_handling("To target_id den einai arithmos"));
+    }
+    else if(num_of_stars==="" || num_of_stars===" "){
+        res.send(error_handling("keno pedio num_of_stars"));
+    }
+    else if(type==="" || type===" "){
+        res.send(error_handling("keno pedio type"));
+    }
+    else{
+        registerRate(user_id,target_id,num_of_stars,type,res);
+       // res.send(user_id+"  "+target_id+"  "+num_of_stars+"  "+type);
+    }
+});
+
+
+//Rates
+function registerRate(user_id,target_id,num_of_stars,type,res){
+    db.query("INSERT INTO ratings (user_id, target_id, num_of_stars,type) VALUES (?,?,?,?)", 
+        [user_id, target_id,num_of_stars,type],(err, result) => {
+            if (err || result == 0){
+                console.log(error_handling("Error in add rating"));
+                res.send(error_handling("error"));
+            }
+		    else{
+                res.send(success_handling("succes rating"));
+            }
+    });
+}
