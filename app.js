@@ -305,7 +305,7 @@ async function AddUserToTrip(user_id,trip_id,res){
     
 }
 
-app.get('/b/:id',async  (req ,res) => {
+app.get('/tripnum/:id',async  (req ,res) => {
     let l = await getTripCurrentNumOfPassenger(req.params.id);
     console.log(l);
     res.send(success_handling(l+""));
@@ -329,19 +329,49 @@ function getTripCurrentNumOfPassenger(trip_id){
         })
     });
 }
-
-function UpdateCurrentNumOFTrip(trip_id){
-    let num = getTripCurrentNumOfPassenger(trip_id);
-    db.query("update trips set current_num =? where id =?",[num,trip_id],(err, result) => {
-        if (err || result == 0){
-            return false;
-        }
-        else{
-            return true;
-        }
+app.get('/tripnumincrease/:id',async  (req ,res) => {
+    let l = await IncreaseCurrentNumOFTrip(req.params.id);
+    console.log("l = "+l);
+    res.send(success_handling(l+""));
+});
+async function IncreaseCurrentNumOFTrip(trip_id){
+    let num = await getTripCurrentNumOfPassenger(trip_id)+1;
+   // console.log("num ="+num);
+    return new Promise((resolve,reject)=>{
+        db.query("update trips set current_num =? where id =?",[num,trip_id],(err, result) => {
+            if (err || result == 0){
+               // console.log(false);
+                resolve (false);
+            }
+            else{
+              //  console.log(true);
+                resolve (true);
+            }
+        })
     });
 }
+app.get('/tripnumdincrease/:id',async  (req ,res) => {
+    let l = await DincreaseCurrentNumOFTrip(req.params.id);
+    console.log("l = "+l);
+    res.send(success_handling(l+""));
+});
 
+async function DincreaseCurrentNumOFTrip(trip_id){
+    let num = await getTripCurrentNumOfPassenger(trip_id)-1;
+   // console.log("num ="+num);
+    return new Promise((resolve,reject)=>{
+        db.query("update trips set current_num =? where id =?",[num,trip_id],(err, result) => {
+            if (err || result == 0){
+               // console.log(false);
+                resolve (false);
+            }
+            else{
+              //  console.log(true);
+                resolve (true);
+            }
+        })
+    });
+}
 
 
 //==================Rating=====================
