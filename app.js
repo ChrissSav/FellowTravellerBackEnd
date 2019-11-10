@@ -350,6 +350,7 @@ async function IncreaseCurrentNumOFTrip(trip_id){
         })
     });
 }
+//===============================================
 app.get('/tripnumdincrease/:id',async  (req ,res) => {
     let l = await DincreaseCurrentNumOFTrip(req.params.id);
     console.log("l = "+l);
@@ -372,15 +373,66 @@ async function DincreaseCurrentNumOFTrip(trip_id){
         })
     });
 }
+//===============================================
+app.get('/setrateoftrip/:id/:rate', async(req ,res) => {
+    let l = await  SetRateOfTrip(req.params.id,req.params.rate);
+    //console.log("l = "+l);
+    //console.log(req.params.id+req.params.rate)
+    //SetRateOfTrip(req.params.id,req.params.rate);
+    //res.send(success_handling("sdsdds"));
+    res.send(success_handling(l+""));
+});
+async function SetRateOfTrip(trip_id,stars){
+    let str = parseFloat(stars);
+    //console.log(i)  
+    let num1 = await GetRateOfTrip(trip_id);
+    let sum = (str+num1)/2;
+    console.log("str = "+str+ " num1 = "+num1+" sum = "+sum);
+    //console.log("num1 = "+num1);
+    //console.log("sum = "+sum);
+    return new Promise((resolve,reject)=>{
+        let q = "update trips set rate ="+sum+" where id ="+trip_id;
+        console.log(q);
+        db.query(q,(err, result) => {
+            if (err || result == 0){
+               // console.log(false);
+                resolve (false);
+            }
+            else{
+              //  console.log(true);
+                resolve (true);
+            }
+        })
+    });
+}
+//===============================================
+app.get('/getrateoftrip/:id/',async  (req ,res) => {
+    let l = await GetRateOfTrip(req.params.id);
+    console.log("l = "+l);
+    res.send(success_handling(l+""));
+});
 
-
+function GetRateOfTrip(id){
+    return new Promise((resolve,reject)=>{
+        db.query("select rate from trips where id =?",id,(err, result) => {
+            if (err || result == 0){
+               // console.log(false);
+                resolve (-1);
+            }
+            else{
+              //  console.log(true);
+                resolve (result[0].rate);
+            }
+        })
+    });
+}
+//===============================================
 //==================Rating=====================
 app.get('/trips/:user_id/:target_id/:num_of_stars/:type', (req ,res) => {
     let user_id = req.params.user_id;
     let target_id = req.params.target_id;
     let num_of_stars = req.params.num_of_stars;
     let type = req.params.type;
-
     if(user_id===" " || user_id===""){
         res.send(error_handling("keno user_id"));
     }
