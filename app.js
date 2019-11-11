@@ -71,7 +71,7 @@ async function check(table,key,id){
 //=====fuction check if exist in table=============
 function checkIfExistInTable(table,key,id){
     const q = "select * from "+table+" where "+key+"="+id;
-   // console.log(q)
+    //console.log(q)
     return new Promise((resolve,reject)=>{
         db.query(q, function (err, result) {
             if (err  || result.length==0){ 
@@ -428,34 +428,62 @@ function GetRateOfTrip(id){
 }
 //===============================================
 //==================Rating=====================
-app.get('/trips/:user_id/:target_id/:num_of_stars/:type', (req ,res) => {
+app.get('/rate/:user_id/:target_id/:num_of_stars/:type',async (req ,res) => {
+    
     let user_id = req.params.user_id;
     let target_id = req.params.target_id;
     let num_of_stars = req.params.num_of_stars;
     let type = req.params.type;
-    if(user_id===" " || user_id===""){
-        res.send(error_handling("keno user_id"));
-    }
-    else if(!isNaN(user_id)){
-        res.send(error_handling("to user_id den einai arithmos"));
-    }
-    else if(target_id===" " || target_id===""){
-        res.send(error_handling("keno target_id "));
-    }
-    else if(!isNaN(target_id)){
-        res.send(error_handling("To target_id den einai arithmos"));
-    }
-    else if(num_of_stars==="" || num_of_stars===" "){
-        res.send(error_handling("keno pedio num_of_stars"));
-    }
-    else if(type==="" || type===" "){
-        res.send(error_handling("keno pedio type"));
-    }
-    else{
-        registerRate(user_id,target_id,num_of_stars,type,res);
-       // res.send(user_id+"  "+target_id+"  "+num_of_stars+"  "+type);
+    try{
+        if(user_id===" " || user_id===""){
+            res.send(error_handling("keno user_id"));
+        }
+        else if(isNaN(user_id)){
+            res.send(error_handling("to user_id den einai arithmos"));
+        }
+        else if(target_id===" " || target_id===""){
+            res.send(error_handling("keno target_id "));
+        }
+        else if(isNaN(target_id)){
+            res.send(error_handling("To target_id den einai arithmos"));
+        }
+        else if(num_of_stars==="" || num_of_stars===" "){
+            res.send(error_handling("keno pedio num_of_stars"));
+        }
+        else if(type!=1 && type!=2){
+            res.send(error_handling("lathos pedio type"));
+        }
+        else if (!await checkIfExistInTable("users","id",user_id)){
+            res.send(error_handling("den yparxei user me ayto o id"));
+        }
+        else{
+            if(type==1){
+                //console.log("type 1= "+type);
+                if(user_id==target_id){
+                    res.send(error_handling("user_id==target_id"));
+                }
+                else if(!await checkIfExistInTable("users","id",target_id)){
+                    res.send(error_handling("den yparxei user_id me ayto o id"));
+                }
+                else{
+                    res.send(success_handling("mpompes"));
+                }
+            }
+            else if (type==2){
+               // console.log("type 2= "+type);
+                if(!await checkIfExistInTable("trips","id",target_id)){
+                    res.send(error_handling("den yparxei target_id me ayto o id"));
+                }
+                else{
+                    res.send(success_handling("mpompes"));
+                }
+            }
+        }
+    }catch(error){
+        res.send(error_handling(error));
     }
 });
+
 
 
 //Rates
