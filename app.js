@@ -206,20 +206,20 @@ app.delete('/users/:id',(req,res) => {
     })
 });
 
-/*app.get('/getUserNumOfTripTakesPart/:id',async (req,res) => {
+app.get('/getUserNumOfTripTakesPart/:id',async (req,res) => {
     try{
-        let l = await getUserNumOfTripTakesPart(req.params.id);
+        let l = await getUserNumOfTrispOffers(req.params.id);
         res.send(success_handling(l+""));
     }catch(error){
         res.send(error_handling(error))
     }
     
-});*/
+});
 
-function getUserNumOfTripTakesPart(user_id){
+function getUserNumOfTripsTakesPart(user_id){
     return new Promise((resolve,reject)=>{
-        let q = "SELECT COUNT(*) count FROM fellowtraveller.users_and_trips "+
-        "WHERE fellowtraveller.users_and_trips.user_id="+user_id;
+        let q = "SELECT COUNT(*) count FROM users_and_trips "+
+        "WHERE users_and_trips.user_id="+user_id;
             db.query(q,(err, result) => {
                 if (err || result == 0){
                    // console.log(false);
@@ -227,7 +227,6 @@ function getUserNumOfTripTakesPart(user_id){
                 }
                 else{
                   //  console.log(true);
-                  console.log(result[0].count)
                     resolve (result[0].count);
                 }
             })
@@ -235,6 +234,24 @@ function getUserNumOfTripTakesPart(user_id){
     });
 }
 
+function getUserNumOfTrispOffers(user_id){
+    return new Promise((resolve,reject)=>{
+        let q = "SELECT COUNT(*) count FROM trips "+
+        "WHERE trips.creator_id="+user_id;
+            db.query(q,(err, result) => {
+                if (err || result == 0){
+                   // console.log(false);
+                    resolve (0);
+                }
+                else{
+                  //  console.log(true);
+                //  console.log(result[0].count)
+                    resolve (result[0].count);
+                }
+            })
+
+    });
+}
 //======================TripS========================
 app.get('/trips/:from/:to/:date/:time_dep/:time_arriv/:creator_id/', (req ,res) => {
     let from = req.params.from;
