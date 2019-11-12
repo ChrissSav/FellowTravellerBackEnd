@@ -415,7 +415,31 @@ app.get('/getrateoftrip/:id/',async  (req ,res) => {
     //console.log("l = "+l);
     res.send(success_handling(l+""));
 });
-
+//------------------------------------------------
+/*app.get('/getusersoftrip/:id/',async  (req ,res) => {
+    let l = await getUsersOfTrip(req.params.id);
+   // getUsersOfTrip(req.params.id,res);
+    //console.log("l = "+l);
+    res.send(l);
+    //res.send(success_handling("dgfgfregr"));
+});*/
+function getUsersOfTrip(trip_id){
+    return new Promise((resolve,reject) => {
+        let q = "select users.* "+
+        "from users join users_and_trips on users.id = users_and_trips.user_id"+
+        " where users_and_trips.trip_id = "+trip_id;
+        db.query(q,(err, result) => {
+            if (err || result == 0){
+               // console.log(false);
+                resolve ("false");
+            }
+            else{
+              //  console.log(true);
+                resolve (result);
+            }
+        })
+    });
+}
 //===============================================
 //==================Rating=====================
 app.get('/rate/:user_id/:target_id/:num_of_stars/:type',async (req ,res) => {
