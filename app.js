@@ -206,7 +206,17 @@ app.delete('/users/:id',(req,res) => {
     })
 });
 
-app.get('/getUserNumOfTripTakesPart/:id',async (req,res) => {
+/*app.get('/getUserNumOfTrispOffersFromTable/:id',async (req,res) => {
+    try{
+        let l = await getUserNumOfTrispOffersFromTable(req.params.id);
+        res.send(success_handling(l+""));
+    }catch(error){
+        res.send(error_handling(error))
+    }
+    
+});*/
+
+/*app.get('/getUserNumOfTrispOffers/:id',async (req,res) => {
     try{
         let l = await getUserNumOfTrispOffers(req.params.id);
         res.send(success_handling(l+""));
@@ -214,9 +224,9 @@ app.get('/getUserNumOfTripTakesPart/:id',async (req,res) => {
         res.send(error_handling(error))
     }
     
-});
+});*/
 
-function getUserNumOfTripsTakesPart(user_id){
+function getUserNumOfTripsTakesPartFromTable(user_id){
     return new Promise((resolve,reject)=>{
         let q = "SELECT COUNT(*) count FROM users_and_trips "+
         "WHERE users_and_trips.user_id="+user_id;
@@ -234,7 +244,7 @@ function getUserNumOfTripsTakesPart(user_id){
     });
 }
 
-function getUserNumOfTrispOffers(user_id){
+function getUserNumOfTrispOffersFromTable(user_id){
     return new Promise((resolve,reject)=>{
         let q = "SELECT COUNT(*) count FROM trips "+
         "WHERE trips.creator_id="+user_id;
@@ -247,6 +257,56 @@ function getUserNumOfTrispOffers(user_id){
                   //  console.log(true);
                 //  console.log(result[0].count)
                     resolve (result[0].count);
+                }
+            })
+
+    });
+}
+
+function getUserNumOfTrispOffers(user_id){
+    return new Promise((resolve,reject)=>{
+        let q = "SELECT num_of_travels_offered FROM users "+
+        "WHERE id="+user_id;
+            db.query(q,(err, result) => {
+                if (err || result == 0){
+                   // console.log(false);
+                    resolve (0);
+                }
+                else{
+                  //  console.log(true);
+                //  console.log(result[0].count)
+                    resolve (result[0].num_of_travels_offered);
+                }
+            })
+
+    });
+}
+
+
+app.get('/UpdateUserNumOfTripOffer/:id/:num',async (req,res) => {
+    try{
+        let l = await UpdateUserNumOfTripOffer(req.params.id,req.params.num);
+        res.send(success_handling(l+""));
+    }catch(error){
+        res.send(error_handling(error))
+    }
+    
+});
+async function UpdateUserNumOfTripOffer(user_id,num){
+    let f = await getUserNumOfTrispOffers(user_id);
+    let newnum = (parseInt(num));
+    let sum = f + newnum;
+    //console.log(parseInt(num))
+   // console.log(f +" + "+newnum+" = "+sum);
+    return new Promise((resolve,reject)=>{
+        let q = "update users set users.num_of_travels_offered = "+sum+
+        " where users.id ="+user_id;
+            db.query(q,(err, result) => {
+                if (err || result == 0){
+                    resolve (false);
+                }
+                else{
+                    resolve (true);
                 }
             })
 
