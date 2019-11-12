@@ -416,29 +416,34 @@ app.get('/getrateoftrip/:id/',async  (req ,res) => {
     res.send(success_handling(l+""));
 });
 //------------------------------------------------
-/*app.get('/getusersoftrip/:id/',async  (req ,res) => {
+app.get('/getusersoftrip/:id/',async  (req ,res) => {
     let l = await getUsersOfTrip(req.params.id);
    // getUsersOfTrip(req.params.id,res);
     //console.log("l = "+l);
     res.send(l);
     //res.send(success_handling("dgfgfregr"));
-});*/
-function getUsersOfTrip(trip_id){
-    return new Promise((resolve,reject) => {
-        let q = "select users.* "+
-        "from users join users_and_trips on users.id = users_and_trips.user_id"+
-        " where users_and_trips.trip_id = "+trip_id;
-        db.query(q,(err, result) => {
-            if (err || result == 0){
-               // console.log(false);
-                resolve ("false");
-            }
-            else{
-              //  console.log(true);
-                resolve (result);
-            }
-        })
-    });
+});
+async function getUsersOfTrip(trip_id){
+    if(!await checkIfExistInTable("trips","id",trip_id)){
+        return error_handling("current trip does't exist")
+    }else{
+        return new Promise((resolve,reject) => {
+            let q = "select users.* "+
+            "from users join users_and_trips on users.id = users_and_trips.user_id"+
+            " where users_and_trips.trip_id = "+trip_id;
+            db.query(q,(err, result) => {
+                if (err || result == 0){
+                   // console.log(false);
+                    resolve (error_handling("0"));
+                }
+                else{
+                  //  console.log(true);
+                    resolve (result);
+                }
+            })
+        });
+    }
+    
 }
 //===============================================
 //==================Rating=====================
