@@ -610,6 +610,8 @@ app.get('/rate/:user_id/:target_id/:num_of_stars/:type',async (req ,res) => {
 
 
 //Rates
+
+// Δοκιμαστικό Commit
 function registerRate(user_id,target_id,num_of_stars,type,res){
     db.query("INSERT INTO ratings (user_id, target_id, num_of_stars,type) VALUES (?,?,?,?)", 
         [user_id, target_id,num_of_stars,type],(err, result) => {
