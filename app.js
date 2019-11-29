@@ -5,7 +5,6 @@ let success_handling = require('./success_handling');
 import class_trip from './class_trip';
 
 
-
 const db = mysql.createConnection({
     host: 'localhost',
     user: 'root',
