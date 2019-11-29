@@ -355,6 +355,19 @@ app.get('/trips/:from/:to/:date/:time_dep/:time_arriv/:creator_id/', (req ,res) 
 });
 
 
+function updateTrippState(state,trip_id){
+    let q = "update trips set state="+state+" where id ="+trip_id;
+    return new Promise((resolve,reject)=>{
+        db.query(q,(err, result) => {
+            if (err || result == 0){
+                resolve(false);
+            }
+            else{
+                resolve(true);
+            } 
+        })
+    });
+}
 
 
 function registerTrip(from,to,date,time_dep,time_arriv,creator_id,res){
