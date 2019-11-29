@@ -2,8 +2,7 @@ const express = require('express');
 const mysql = require('mysql');
 let error_handling = require('./error_handling');
 let success_handling = require('./success_handling');
-
-
+import class_trip from './class_trip';
 
 
 
@@ -29,7 +28,6 @@ const app = express();
 app.listen('5000', () => {
     console.log("on port 5000")
 });
-
 
 app.get('', (req,res) => {
     res.send("Καλώ ήρθατε στο Api του FellowTraveller");
@@ -145,10 +143,11 @@ app.get('/users', (req,res) => {
 
 
  app.get('/users/:id',(req,res) => {
-    db.query('Select * from users where email = ?',[req.params.id],(error, result) => {
+    db.query('Select * from users where email = ?',[req.params.id],(error,result) => {
         if(result.length > 0){
-            console.log("ok  == "); 
-            console.log(result); 
+            //let data = JSON.parse(result[0]);
+            let data = JSON.parse(JSON.stringify(result[0]));
+            console.log(data); 
             res.send(result);
         }
         else{
@@ -156,7 +155,9 @@ app.get('/users', (req,res) => {
             res.send(error_handling("There is no user with these elements"));
         }
     })
+
 });
+
 
 
 
@@ -454,6 +455,7 @@ async function AddUserToTrip(user_id,trip_id,res){
 }
 
 app.get('/tripnum/:id',async  (req ,res) => {
+   
     let l = await getTripCurrentNumOfPassenger(req.params.id);
     console.log(l);
     res.send(success_handling(l+""));
@@ -517,6 +519,35 @@ async function DincreaseCurrentNumOFTrip(trip_id){
             else{
               //  console.log(true);
                 resolve (true);
+            }
+        })
+    });
+}
+//===========================================f
+app.get('/gettrip/:id',async  (req ,res) => {
+    try{
+    
+        res.send(await getTrip(req.params.id));
+    
+    }catch (err){
+        console.log(err)
+        res.send(error_handling(err+"jhigvuyfgtfgiytg"));
+    }
+    
+   
+});
+
+function getTrip(trip_id){
+   // console.log("num ="+num);
+    return new Promise((resolve,reject)=>{
+        let q ="select * from trips where id ="+trip_id;
+        console.log(q);
+        db.query(q,(err, result) => {
+            if (err || result == 0){
+                resolve (err);
+            }
+            else{
+                resolve (result);
             }
         })
     });
