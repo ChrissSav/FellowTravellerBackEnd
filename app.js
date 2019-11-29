@@ -2,8 +2,8 @@ const express = require('express');
 const mysql = require('mysql');
 let error_handling = require('./error_handling');
 let success_handling = require('./success_handling');
-import class_trip from './class_trip';
-
+let class_trip = require('./class_trip');
+let class_user = require('./class_user');
 
 const db = mysql.createConnection({
     host: 'localhost',
@@ -139,10 +139,25 @@ app.get('/users', (req,res) => {
     })
  }); 
 
+ function getUser(id){
+    return new Promise((resolve,reject)=>{
+        db.query('Select * from users where email = ?',[id],(error,result) => {
+            if(result.length > 0){
+                //let data = JSON.parse(result[0]);
+              //  let data = JSON.parse(JSON.stringify(result[0]));
+              //  console.log(data); 
+                resolve(result);
+            }
+            else{
+                console.log(error_handling("There is no user with these elements"));
+                resolve("There is no user with these elements");
+            }
+        })
+    });
+}
 
-
- app.get('/users/:id',(req,res) => {
-    db.query('Select * from users where email = ?',[req.params.id],(error,result) => {
+ app.get('/users/:id',async (req,res) => {
+    /*db.query('Select * from users where email = ?',[req.params.id],(error,result) => {
         if(result.length > 0){
             //let data = JSON.parse(result[0]);
             let data = JSON.parse(JSON.stringify(result[0]));
@@ -153,7 +168,12 @@ app.get('/users', (req,res) => {
             console.log(error_handling("There is no user with these elements"));
             res.send(error_handling("There is no user with these elements"));
         }
-    })
+    })*/
+    try{
+        res.send(await getUser(req.params.id))
+    }catch(err){
+        res.send(error_handling(error))
+    }
 
 });
 
@@ -205,6 +225,8 @@ app.delete('/users/:id',(req,res) => {
 			res.send('Delete succesfully');
     })
 });
+
+
 
 /*app.get('/getUserNumOfTrispOffersFromTable/:id',async (req,res) => {
     try{
@@ -525,22 +547,29 @@ async function DincreaseCurrentNumOFTrip(trip_id){
 //===========================================f
 app.get('/gettrip/:id',async  (req ,res) => {
     try{
-    
-        res.send(await getTrip(req.params.id));
+        var trip = await getTrip(req.params.id);
+        trip = JSON.parse(JSON.stringify(trip[0]));
+        trip = new class_trip(trip);
+        var users = await getUsersOfTrip(3);
+        users = JSON.parse(JSON.stringify(users));
+        trip.AddUSer(users)
+        res.send(trip);
     
     }catch (err){
-        console.log(err)
-        res.send(error_handling(err+"jhigvuyfgtfgiytg"));
+        res.send(error_handling(err));
     }
     
    
 });
 
-function getTrip(trip_id){
+async function f(trip_id){
+    var trip = await getTrip(trip_id);
+}
+
+ function getTrip(trip_id){
    // console.log("num ="+num);
     return new Promise((resolve,reject)=>{
         let q ="select * from trips where id ="+trip_id;
-        console.log(q);
         db.query(q,(err, result) => {
             if (err || result == 0){
                 resolve (err);

@@ -10,3 +10,5 @@ class User{
         this.num_of_travels_takespart= 0
     }
 }
+
+module.exports = User;
