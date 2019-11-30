@@ -1,6 +1,6 @@
 class Trip{ 
  constructor(trip){
-    this.id= trip.id,
+    //this.id= trip.id,
     this.ffrom = trip.ffrom,
     this.tto = trip.tto,
     this.date_departure = trip.date_departure,

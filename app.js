@@ -547,28 +547,79 @@ async function DincreaseCurrentNumOFTrip(trip_id){
 //===========================================f
 app.get('/gettrip/:id',async  (req ,res) => {
     try{
+        console.log("mpike me "+req.params.id);
         var trip = await getTrip(req.params.id);
         trip = JSON.parse(JSON.stringify(trip[0]));
         trip = new class_trip(trip);
         var users = await getUsersOfTrip(req.params.id);
         var creator = await getTripCreator(req.params.id);
         creator = JSON.parse(JSON.stringify(creator));
-        console.log(creator)
         users = JSON.parse(JSON.stringify(users));
         trip.setPassengers(users);
         trip.setCreator(creator);
-        res.send(trip);
+        var v = [];
+        v.push(trip);
+        res.send(v);
     
     }catch (err){
-        res.send(error_handling(err));
+        console.log(err)
+        res.send(error_handling(err+""));
     }
-    
-   
 });
 
-async function f(trip_id){
-    var trip = await getTrip(trip_id);
-}
+
+app.get('/gettrips',async  (req ,res) => {
+    try {
+        var teliko=[];
+        var trips = await getTrips();
+        trips = JSON.parse(JSON.stringify(trips));
+        var numOfTrips = await getNumOfTrips();
+        var i =0;
+        for (var i = 0; i < numOfTrips; i++) {
+            var currentTrip = new class_trip(trips[i]);
+            var creator = await getTripCreator(trips[i].id);
+            creator = JSON.parse(JSON.stringify(creator));
+            var users = await getUsersOfTrip(trips[i].id);
+            users = JSON.parse(JSON.stringify(users));
+            currentTrip.setPassengers(users);
+            currentTrip.setCreator(creator);
+            teliko.push(currentTrip);
+        }
+        res.send(teliko);
+    } catch (error) {
+        res.send(error_handling(error+""));
+    }
+});
+
+function getNumOfTrips(){
+     return new Promise((resolve,reject)=>{
+         let q ="select count(*) count from trips ";
+         db.query(q,(err, result) => {
+             if (err || result == 0){
+                resolve (err);
+             }
+             else{
+                num = JSON.parse(JSON.stringify(result[0])).count;
+                resolve (num);
+             }
+         })
+     });
+ }
+
+function getTrips(){
+    // console.log("num ="+num);
+     return new Promise((resolve,reject)=>{
+         let q ="select * from trips ";
+         db.query(q,(err, result) => {
+             if (err || result == 0){
+                resolve (err);
+             }
+             else{
+                resolve (result);
+             }
+         })
+     });
+ }
 
 function getTrip(trip_id){
    // console.log("num ="+num);
