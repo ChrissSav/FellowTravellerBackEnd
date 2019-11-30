@@ -12,8 +12,6 @@ class Trip{
     this.current_num_of_seats= trip.current_num_of_seats,
     this.max_bags=trip.max_bags,
     this.current_num_of_bags= trip.current_num_of_bags,
-    this.max_suitcase = trip.num_of_suitcase,
-    this.current_num_of_suitcases= trip.current_num_of_suitcases,
     this.rate = trip.rate,
     this.state = trip.state
   }

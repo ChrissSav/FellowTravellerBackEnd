@@ -3,6 +3,7 @@ const mysql = require('mysql');
 let error_handling = require('./error_handling');
 let success_handling = require('./success_handling');
 let class_trip = require('./class_trip');
+let status_handling = require('./status_handling');
 let class_user = require('./class_user');
 
 const db = mysql.createConnection({
@@ -335,17 +336,18 @@ async function UpdateUserNumOfTripOffer(user_id,num){
     });
 }
 //======================TripS========================
-app.get('/trips/:from/:to/:date/:time_dep/:time_arriv/:creator_id/', (req ,res) => {
+app.get('/trips/:from/:to/:date/:time/:creator_id/:description/:max_seats/:max_bags', async(req ,res) => {
     let from = req.params.from;
     let to = req.params.to;
     let date = req.params.date;
-    let time_dep = req.params.time_dep;
-    let time_arriv = req.params.time_arriv;
+    let time = req.params.time;
     let creator_id = req.params.creator_id;
-    //console.log("from = "+from+"  legth = "+from.length);
+    let description = req.params.description;
+    let max_seats = req.params.max_seats;
+    let max_bags = req.params.max_bags;
     //console.log("to = "+to+"  legth = "+to.length);
 
-    if(from===" "){
+   /* if(from===" "){
         res.send(error_handling("keni apo"));
     }
     else if(to===" "){
@@ -357,21 +359,31 @@ app.get('/trips/:from/:to/:date/:time_dep/:time_arriv/:creator_id/', (req ,res) 
     else if(!validDate(date)){
         res.send(error_handling("lathos imerominia prepei dd-mm-yyyy"));
     }
-    else if (time_dep==="" || time_dep===" "){
+    else if (time==="" || time===" "){
         res.send(error_handling("keni wra anaxwrisis"));
     }
     else if (!checkTime(time_dep)){
         res.send(error_handling("lathos wra anaxwrisis HH:mm"));
     }
-    else if (time_arriv==="" || time_arriv===" "){
-        res.send(error_handling("keni wra afiskis"));
-    }
     else if (!checkTime(time_arriv)){
         res.send(error_handling("lathos wra afiskis HH:mm"));
     }
     else{
-        registerTrip(from,to,date,time_dep,time_arriv,creator_id,res);
-        //res.send(from+"  "+to+"  "+date+"  "+time_dep+"  "+time_arriv+"  "+creator_id);
+        if(await registerTrip(from,to,creator_id,description,max_seats,max_bags,max_suitcases)){
+            res.send(success_handling("success"));
+        }
+        else{
+            res.send(success_handling("success"));
+        }
+    }*/
+    var v = [];
+    if(await registerTrip(from,to,date,time,creator_id,description,max_seats,max_bags)){
+                v.push(success_handling("success","success"))
+        res.send(v);
+    }
+    else{
+        v.push(success_handling("error","error"))
+        res.send(status_handling("error","error"));
     }
     
 });
@@ -391,17 +403,19 @@ function updateTrippState(state,trip_id){
     });
 }
 
+function registerTrip(from,to,date,time,creator_id,description,max_seats,max_bags){
+    return new Promise((resolve,reject)=>{
 
-function registerTrip(from,to,date,time_dep,time_arriv,creator_id,res){
-    db.query("INSERT INTO trips (ffrom, tto, date_departure,time_depsrture,time_arrivals,creator_id) VALUES (?,?,?,?,?,?)", 
-        [from, to,date,time_dep,time_arriv,creator_id],(err, result) => {
-            if (err || result == 0){
-                console.log(error_handling("Error in add trip"));
-                res.send(error_handling("error"));
-            }
-		    else{
-                res.send(success_handling("succes add trip"));
-            }
+        db.query("insert into trips (ffrom,tto,date,time,creator_id,description,max_seats,max_bags) VALUES (?,?,?,?,?,?,?,?)", 
+            [from,to,date,time,creator_id,description,max_seats,max_bags],(err, result) => {
+                if (err || result == 0){
+
+                    resolve(false);
+                }
+                else{
+                    resolve(true);
+                }
+        })
     });
 }
 
@@ -623,8 +637,8 @@ function getTrip(trip_id){
    // console.log("num ="+num);
     return new Promise((resolve,reject)=>{
         let q ="select ffrom ,tto ,date,time,"+
-        "description,max_seats,current_num_of_seats,current_num_of_bags,max_bags,current_num_of_suitcases,"+
-        "max_suitcase,rate,state from trips where id ="+trip_id;
+        "description,max_seats,current_num_of_seats,current_num_of_bags,max_bags,"+
+        "rate,state from trips where id ="+trip_id;
         db.query(q,(err, result) => {
             if (err || result == 0){
                 resolve (err);
@@ -686,7 +700,7 @@ async function getUsersOfTrip(trip_id){
             db.query(q,(err, result) => {
                 if (err || result == 0){
                    // console.log(false);
-                    resolve (error_handling("0"));
+                    resolve ([]);
                 }
                 else{
                   //  console.log(true);
