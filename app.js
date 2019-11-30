@@ -550,9 +550,13 @@ app.get('/gettrip/:id',async  (req ,res) => {
         var trip = await getTrip(req.params.id);
         trip = JSON.parse(JSON.stringify(trip[0]));
         trip = new class_trip(trip);
-        var users = await getUsersOfTrip(3);
+        var users = await getUsersOfTrip(req.params.id);
+        var creator = await getTripCreator(req.params.id);
+        creator = JSON.parse(JSON.stringify(creator));
+        console.log(creator)
         users = JSON.parse(JSON.stringify(users));
-        trip.AddUSer(users)
+        trip.setPassengers(users);
+        trip.setCreator(creator);
         res.send(trip);
     
     }catch (err){
@@ -566,10 +570,11 @@ async function f(trip_id){
     var trip = await getTrip(trip_id);
 }
 
- function getTrip(trip_id){
+function getTrip(trip_id){
    // console.log("num ="+num);
     return new Promise((resolve,reject)=>{
-        let q ="select * from trips where id ="+trip_id;
+        let q ="select ffrom ,tto ,date_departure ,time_departure ,time_arrivals,"+
+        "description,max_seats,current_num,num_of_bags,num_of_suitcase,rate,state from trips where id ="+trip_id;
         db.query(q,(err, result) => {
             if (err || result == 0){
                 resolve (err);
@@ -580,6 +585,26 @@ async function f(trip_id){
         })
     });
 }
+
+
+
+function getTripCreator(trip_id){
+    // console.log("num ="+num);
+     return new Promise((resolve,reject)=>{
+         let q ="select fellowtraveller.users.* "+
+         "from fellowtraveller.users join fellowtraveller.trips "+
+         "on fellowtraveller.users.id = fellowtraveller.trips.creator_id"+
+         " where fellowtraveller.trips.id="+trip_id;
+         db.query(q,(err, result) => {
+             if (err || result == 0){
+                resolve (err);
+             }
+             else{
+                resolve (result);
+             }
+         })
+     });
+ }
 //===============================================
 app.get('/setrateoftrip/:id/:rate', async(req ,res) => {
     let l = await  SetRateOfRow("trips","id",req.params.id,req.params.rate);
