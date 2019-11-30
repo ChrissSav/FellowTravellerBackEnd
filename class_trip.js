@@ -3,18 +3,19 @@ class Trip{
     //this.id= trip.id,
     this.ffrom = trip.ffrom,
     this.tto = trip.tto,
-    this.date_departure = trip.date_departure,
-    this.time_departure =trip.time_departure,
-    this.time_arrivals= trip.time_arrivals,
+    this.date = trip.date,
+    this.time =trip.time,
     this.creator=[],
     this.passengers = [],
     this.description= trip.description,
     this.max_seats= trip.max_seats,
-    this.current_num= trip.current_num,
-    this.num_of_bags=trip.num_of_bags,
-    this.num_of_suitcase = trip.num_of_suitcase,
-    this.rate= trip.rate,
-    this.state= trip.state
+    this.current_num_of_seats= trip.current_num_of_seats,
+    this.max_bags=trip.max_bags,
+    this.current_num_of_bags= trip.current_num_of_bags,
+    this.max_suitcase = trip.num_of_suitcase,
+    this.current_num_of_suitcases= trip.current_num_of_suitcases,
+    this.rate = trip.rate,
+    this.state = trip.state
   }
 
   setPassengers(passengers){

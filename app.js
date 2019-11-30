@@ -547,7 +547,6 @@ async function DincreaseCurrentNumOFTrip(trip_id){
 //===========================================f
 app.get('/gettrip/:id',async  (req ,res) => {
     try{
-        console.log("mpike me "+req.params.id);
         var trip = await getTrip(req.params.id);
         trip = JSON.parse(JSON.stringify(trip[0]));
         trip = new class_trip(trip);
@@ -560,7 +559,6 @@ app.get('/gettrip/:id',async  (req ,res) => {
         var v = [];
         v.push(trip);
         res.send(v);
-    
     }catch (err){
         console.log(err)
         res.send(error_handling(err+""));
@@ -624,8 +622,9 @@ function getTrips(){
 function getTrip(trip_id){
    // console.log("num ="+num);
     return new Promise((resolve,reject)=>{
-        let q ="select ffrom ,tto ,date_departure ,time_departure ,time_arrivals,"+
-        "description,max_seats,current_num,num_of_bags,num_of_suitcase,rate,state from trips where id ="+trip_id;
+        let q ="select ffrom ,tto ,date,time,"+
+        "description,max_seats,current_num_of_seats,current_num_of_bags,max_bags,current_num_of_suitcases,"+
+        "max_suitcase,rate,state from trips where id ="+trip_id;
         db.query(q,(err, result) => {
             if (err || result == 0){
                 resolve (err);
