@@ -1,11 +1,12 @@
 let status_resp = {
-    status : '',
+    status : 'error',
     msg : ''
   };
-  
+  // 1 true
   let handler = (status,msg) => {
-  
-    status_resp.status = status;
+    if(status==1){
+        status_resp.status = 'success';
+    }
     status_resp.msg = msg;
     return status_resp;
     

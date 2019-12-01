@@ -181,42 +181,51 @@ app.get('/users', (req,res) => {
 
 
 
-app.get('/users/:name/:email/:password/:phone', (req, res) => { 
+app.get('/registeruser/:name/:birthday/:email/:password/:phone', async (req, res) => { 
     let name = req.params.name;
+    let birthday = req.params.birthday;
     let password = req.params.password;
     let email = req.params.email;
     let phone = req.params.phone;
-    AddUserr(name,email,password,phone,res);
+    try {
+        
+        if(phone.length!=10){
+            res.send(status_handling(0,"to til prepei na einai 10 noymera"));
+        }
+        else if(phone[0]!=='6' || phone[1]!=='9'){
+            res.send(status_handling(0,"to til prepei na arxizei apo 69"));
+        }
+        else if(email.length==0){
+            res.send(status_handling(0,"Email einai keno"));
+        }
+        else if(!validateEmail(email)){
+            res.send(status_handling(0,"lahtos email"));
+        }
+        else if(await check("users","email",email)){
+            res.send(status_handling(0,"yparxei xristi me auto to email"));
+        }
+        else if (await RegisterUser(name,birthday,email,password,phone)){
+            res.send(status_handling(1,"ytf"));
+        }else{
+            res.send(status_handling(0,"υπαρχει ηδη λογαριασμος με αυτο το μαιλ"));
+        }
+    } catch (error) {
+        res.send(status_handling(2,error+""));
+    }
 });
 
-async function AddUserr(name,email,password,phone,res){
-    if(phone.length!=10){
-        res.send(error_handling("to til prepei na einai 10 noymera"));
-    }
-    else if(phone[0]!=='6' || phone[1]!=='9'){
-        res.send(error_handling("to til prepei na arxizei apo 69"));
-    }
-    else if(email.length==0){
-        res.send(error_handling("Email einai keno"));
-    }
-    else if(!validateEmail(email)){
-        res.send(error_handling("lahtos email"));
-    }
-    else if(await check("users","email",email)){
-        res.send(error_handling("yparxei xristi me auto to email"));
-    }
-    else{
-        db.query("INSERT INTO users (name, email, password,phone) VALUES (?,?,?,?)", 
-        [name, email,password,phone],(err, result) => {
-            if (err || result == 0){
-                console.log(err.sqlMessage);
-                res.send(error_handling("error"));
+function RegisterUser(name,birthday,email,password,phone){
+    return new Promise((resolve,reject)=>{
+        db.query("INSERT INTO users (name,birthday, email, password,phone) VALUES (?,?,?,?,?)", 
+        [name,birthday,email,password,phone],(err, result) => {
+            if (err){
+                resolve(false);
             }
 		    else{
-                res.send(success_handling("succes user add USER WITH NAME ="+name));
+                resolve(true);
             }
-        });
-    }
+        })
+    });    
 }
 app.delete('/users/:id',(req,res) => {
     db.query('DELETE FROM users where id = ?',[req.params.id],(err,rows, fields) => {
@@ -376,14 +385,13 @@ app.get('/trips/:from/:to/:date/:time/:creator_id/:description/:max_seats/:max_b
             res.send(success_handling("success"));
         }
     }*/
-    var v = [];
     if(await registerTrip(from,to,date,time,creator_id,description,max_seats,max_bags)){
-                v.push(success_handling("success","success"))
-        res.send(v);
+        res.send(success_handling(1,"success"));
+        console.log(success_handling(1,"success"))
     }
     else{
-        v.push(success_handling("error","error"))
-        res.send(status_handling("error","error"));
+        console.log(success_handling(2,"error"))
+        res.send(status_handling(2,"error"));
     }
     
 });
