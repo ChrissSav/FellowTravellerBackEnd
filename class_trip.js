@@ -5,7 +5,7 @@ class Trip{
     this.tto = trip.tto,
     this.date = trip.date,
     this.time =trip.time,
-    this.creator=[],
+    this.creator={},
     this.passengers = [],
     this.description= trip.description,
     this.max_seats= trip.max_seats,
@@ -23,8 +23,8 @@ class Trip{
   setCreator(creator){
     this.creator=(creator);
   }
-  getUser(){
-    return this.users;
+  getPassengers(){
+    return this.passengers;
   }
 }
 

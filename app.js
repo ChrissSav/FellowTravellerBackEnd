@@ -574,7 +574,7 @@ app.get('/gettrip/:id',async  (req ,res) => {
         trip = new class_trip(trip);
         var users = await getUsersOfTrip(req.params.id);
         var creator = await getTripCreator(req.params.id);
-        creator = JSON.parse(JSON.stringify(creator));
+        creator = JSON.parse(JSON.stringify(creator[0]));
         users = JSON.parse(JSON.stringify(users));
         trip.setPassengers(users);
         trip.setCreator(creator);
@@ -598,7 +598,7 @@ app.get('/gettrips',async  (req ,res) => {
         for (var i = 0; i < numOfTrips; i++) {
             var currentTrip = new class_trip(trips[i]);
             var creator = await getTripCreator(trips[i].id);
-            creator = JSON.parse(JSON.stringify(creator));
+            creator = JSON.parse(JSON.stringify(creator[0]));
             var users = await getUsersOfTrip(trips[i].id);
             users = JSON.parse(JSON.stringify(users));
             currentTrip.setPassengers(users);
