@@ -3,7 +3,6 @@ const mysql = require('mysql');
 let error_handling = require('./error_handling');
 let success_handling = require('./success_handling');
 let class_trip = require('./class_trip');
-let status_handling = require('./status_handling');
 let class_user = require('./class_user');
 
 const db = mysql.createConnection({
@@ -180,6 +179,31 @@ app.get('/users', (req,res) => {
 
 
 
+app.get('/getuserauth/:email/:pass',async (req,res) => {
+    try{
+        res.send(await getUserAuth(req.params.email,req.params.pass))
+    }catch(err){
+        res.send(error_handling(error))
+    }
+
+});
+
+function getUserAuth(email,password){
+    return new Promise((resolve,reject)=>{
+        db.query("select * from users where email = ? and password = ?", 
+        [email,password],(err, result) => {
+            if (err || result == 0){             
+                resolve(error_handling('error'));
+            }
+		    else{
+                resolve(success_handling('ok'));
+            }
+        })
+    }); 
+}
+
+
+
 
 app.get('/registeruser/:name/:birthday/:email/:password/:phone', async (req, res) => { 
     let name = req.params.name;
@@ -190,27 +214,27 @@ app.get('/registeruser/:name/:birthday/:email/:password/:phone', async (req, res
     try {
         
         if(phone.length!=10){
-            res.send(status_handling(0,"to til prepei na einai 10 noymera"));
+            res.send(error_handling("to til prepei na einai 10 noymera"));
         }
         else if(phone[0]!=='6' || phone[1]!=='9'){
-            res.send(status_handling(0,"to til prepei na arxizei apo 69"));
+            res.send(error_handling("to til prepei na arxizei apo 69"));
         }
         else if(email.length==0){
-            res.send(status_handling(0,"Email einai keno"));
+            res.send(error_handling("Email einai keno"));
         }
         else if(!validateEmail(email)){
-            res.send(status_handling(0,"lahtos email"));
+            res.send(error_handling("lahtos email"));
         }
         else if(await check("users","email",email)){
-            res.send(status_handling(0,"yparxei xristi me auto to email"));
+            res.send(error_handling("yparxei xristi me auto to email"));
         }
         else if (await RegisterUser(name,birthday,email,password,phone)){
-            res.send(status_handling(1,"ytf"));
+            res.send(success_handling("ytf"));
         }else{
-            res.send(status_handling(0,"υπαρχει ηδη λογαριασμος με αυτο το μαιλ"));
+            res.send(error_handling("υπαρχει ηδη λογαριασμος με αυτο το μαιλ"));
         }
     } catch (error) {
-        res.send(status_handling(2,error+""));
+        res.send(error_handling(error+""));
     }
 });
 
@@ -391,7 +415,7 @@ app.get('/trips/:from/:to/:date/:time/:creator_id/:description/:max_seats/:max_b
     }
     else{
         console.log(success_handling(2,"error"))
-        res.send(status_handling(2,"error"));
+        res.send(error_handling(2,"error"));
     }
     
 });
@@ -522,11 +546,7 @@ function getTripCurrentNumOfPassenger(trip_id){
         })
     });
 }
-app.get('/tripnumincrease/:id',async  (req ,res) => {
-    let l = await IncreaseCurrentNumOFTrip(req.params.id);
-    console.log("l = "+l);
-    res.send(success_handling(l+""));
-});
+
 async function IncreaseCurrentNumOFTrip(trip_id){
     let num = await getTripCurrentNumOfPassenger(trip_id)+1;
    // console.log("num ="+num);
@@ -544,6 +564,12 @@ async function IncreaseCurrentNumOFTrip(trip_id){
     });
 }
 //===============================================
+
+app.get('/tripnumdincrease/:id',async  (req ,res) => {
+    let l = await DincreaseCurrentNumOFTrip(req.params.id);
+    console.log("l = "+l);
+    res.send(success_handling(l+""));
+});
 app.get('/tripnumdincrease/:id',async  (req ,res) => {
     let l = await DincreaseCurrentNumOFTrip(req.params.id);
     console.log("l = "+l);
@@ -567,6 +593,41 @@ async function DincreaseCurrentNumOFTrip(trip_id){
     });
 }
 //===========================================f
+app.get('/gettripbyfilter/:from/:to',async  (req ,res) => {
+    let l = await getTripByfilter(req.params.from,req.params.to);
+    if (l==0){
+        res.send(error_handling(""));
+    }
+    else{
+        var teliko=[];
+        var trips = l;
+        trips = JSON.parse(JSON.stringify(trips));
+        for (var i = 0; i <trips.length; i++) {
+            var currentTrip = new class_trip(trips[i]);
+            var creator = await getTripCreator(trips[i].id);
+            creator = JSON.parse(JSON.stringify(creator[0]));
+            var users = await getUsersOfTrip(trips[i].id);
+            users = JSON.parse(JSON.stringify(users));
+            currentTrip.setPassengers(users);
+            currentTrip.setCreator(creator);
+            teliko.push(currentTrip);
+        }
+        res.send(teliko);
+    }
+});
+function getTripByfilter(from,to){
+    return new Promise((resolve,reject)=>{
+        //let q = "select * from trips where ffrom = "+from+" and tto =  "+to;
+        db.query("select * from trips where ffrom = ? and tto = ? ",[from,to],(err, result) => {
+            if (err || result == 0){
+                resolve (0);
+            }
+            else{
+                resolve (result);
+            }
+        })
+    });
+}
 app.get('/gettrip/:id',async  (req ,res) => {
     try{
         var trip = await getTrip(req.params.id);
