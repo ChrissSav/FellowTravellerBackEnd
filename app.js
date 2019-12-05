@@ -149,7 +149,7 @@ app.get('/users', (req,res) => {
                 resolve(result);
             }
             else{
-                console.log(error_handling("There is no user with these elements"));
+              //  console.log(error_handling("There is no user with these elements"));
                 resolve("There is no user with these elements");
             }
         })
@@ -411,10 +411,10 @@ app.get('/trips/:from/:to/:date/:time/:creator_id/:description/:max_seats/:max_b
     }*/
     if(await registerTrip(from,to,date,time,creator_id,description,max_seats,max_bags)){
         res.send(success_handling(1,"success"));
-        console.log(success_handling(1,"success"))
+        //console.log(success_handling(1,"success"))
     }
     else{
-        console.log(success_handling(2,"error"))
+      //  console.log(success_handling(2,"error"))
         res.send(error_handling(2,"error"));
     }
     
@@ -567,12 +567,10 @@ async function IncreaseCurrentNumOFTrip(trip_id){
 
 app.get('/tripnumdincrease/:id',async  (req ,res) => {
     let l = await DincreaseCurrentNumOFTrip(req.params.id);
-    console.log("l = "+l);
     res.send(success_handling(l+""));
 });
 app.get('/tripnumdincrease/:id',async  (req ,res) => {
     let l = await DincreaseCurrentNumOFTrip(req.params.id);
-    console.log("l = "+l);
     res.send(success_handling(l+""));
 });
 
@@ -672,6 +670,50 @@ app.get('/gettrips',async  (req ,res) => {
     }
 });
 
+
+
+
+
+app.get('/gettripstakespart/:user_id',async  (req ,res) => {
+    try {
+        var id = req.params.user_id;
+        var teliko=[];
+        var trips = await getTripsTakePart(id);
+        trips = JSON.parse(JSON.stringify(trips));
+        for (var i = 0; i < trips.length; i++) {
+            var currentTrip = new class_trip(trips[i]);
+            var creator = await getTripCreator(trips[i].id);
+            creator = JSON.parse(JSON.stringify(creator[0]));
+            var users = await getUsersOfTrip(trips[i].id);
+            users = JSON.parse(JSON.stringify(users));
+            currentTrip.setPassengers(users);
+            currentTrip.setCreator(creator);
+            teliko.push(currentTrip);
+        }
+        res.send(teliko);
+    } catch (error) {
+        res.send(error_handling(error+""));
+    }
+});
+
+
+
+
+function getTripsTakePart(id){
+    return new Promise((resolve,reject)=>{
+        let q ="select fellowtraveller.trips.* from fellowtraveller.users_and_trips "+
+        " join fellowtraveller.trips on fellowtraveller.users_and_trips.trip_id = fellowtraveller.trips.id "+
+        " where fellowtraveller.trips.creator_id= "+id;
+        db.query(q,(err, result) => {
+            if (err || result == 0){
+               resolve ([]);
+            }
+            else{
+                resolve(result)
+            }
+        })
+    });
+}
 function getNumOfTrips(){
      return new Promise((resolve,reject)=>{
          let q ="select count(*) count from trips ";
@@ -688,7 +730,6 @@ function getNumOfTrips(){
  }
 
 function getTrips(){
-    // console.log("num ="+num);
      return new Promise((resolve,reject)=>{
          let q ="select * from trips ";
          db.query(q,(err, result) => {
@@ -703,7 +744,6 @@ function getTrips(){
  }
 
 function getTrip(trip_id){
-   // console.log("num ="+num);
     return new Promise((resolve,reject)=>{
         let q ="select ffrom ,tto ,date,time,"+
         "description,max_seats,current_num_of_seats,current_num_of_bags,max_bags,"+
@@ -722,7 +762,6 @@ function getTrip(trip_id){
 
 
 function getTripCreator(trip_id){
-    // console.log("num ="+num);
      return new Promise((resolve,reject)=>{
          let q ="select fellowtraveller.users.* "+
          "from fellowtraveller.users join fellowtraveller.trips "+
@@ -747,14 +786,12 @@ app.get('/setrateoftrip/:id/:rate', async(req ,res) => {
 //===============================================
 app.get('/getrateoftrip/:id/',async  (req ,res) => {
     let l = await GetRateOfRow("trips","id",req.params.id);
-    //console.log("l = "+l);
     res.send(success_handling(l+""));
 });
 //------------------------------------------------
 app.get('/getusersoftrip/:id/',async  (req ,res) => {
     let l = await getUsersOfTrip(req.params.id);
    // getUsersOfTrip(req.params.id,res);
-    //console.log("l = "+l);
     res.send(l);
     //res.send(success_handling("dgfgfregr"));
 });
@@ -846,7 +883,6 @@ function registerRate(user_id,target_id,num_of_stars,type,res){
     db.query("INSERT INTO ratings (user_id, target_id, num_of_stars,type) VALUES (?,?,?,?)", 
         [user_id, target_id,num_of_stars,type],(err, result) => {
             if (err || result == 0){
-                console.log(error_handling("Error in add rating"));
                 res.send(error_handling("error"));
             }
 		    else{
