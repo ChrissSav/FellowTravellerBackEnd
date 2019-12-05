@@ -196,7 +196,7 @@ function getUserAuth(email,password){
                 resolve(error_handling('error'));
             }
 		    else{
-                resolve(success_handling('ok'));
+                resolve(result[0]);
             }
         })
     }); 
