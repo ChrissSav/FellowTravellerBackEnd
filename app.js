@@ -605,9 +605,11 @@ async function DincreaseCurrentNumOFTrip(trip_id){
 }
 //===========================================f
 app.get('/gettripbyfilter/:from/:to',async  (req ,res) => {
+    console.log("gettripbyfilter");
     let l = await getTripByfilter(req.params.from,req.params.to);
     if (l==0){
         res.send(error_handling(""));
+       // console.log("teliko : "+0);
     }
     else{
         var teliko=[];
@@ -623,6 +625,7 @@ app.get('/gettripbyfilter/:from/:to',async  (req ,res) => {
             currentTrip.setCreator(creator);
             teliko.push(currentTrip);
         }
+      //  console.log("teliko : "+teliko);
         res.send(teliko);
     }
 });
@@ -903,3 +906,51 @@ function registerRate(user_id,target_id,num_of_stars,type,res){
             }
     });
 }
+
+//request
+
+
+app.get('/registerrequest/:creator_id/:trip_id',async  (req ,res) => {
+    let status = await RegisterRequest(req.params.creator_id,req.params.trip_id);
+    if (status == 1){
+        res.send(success_handling("success"));
+    }else{
+        res.send(error_handling("error"));
+    }
+});
+function RegisterRequest(creator_id,target_id){
+    return new Promise((resolve,reject)=>{
+        db.query("insert into request (creator_id,target_id) VALUES (?,?) ",[creator_id,target_id],(err, result) => {
+            if (err || result == 0){
+                console.log(err)
+                resolve (-1);
+            }
+            else{
+                resolve (1);
+            }
+        })
+    });
+}
+
+app.get('/changerequeststatus/:id/:status',async  (req ,res) => {
+    let status = await ChangeRequestStatus(req.params.id,req.params.status);
+    if (status == 1){
+        res.send(success_handling("success"));
+    }else{
+        res.send(error_handling("error"));
+    }
+});
+function ChangeRequestStatus(id,status){
+    return new Promise((resolve,reject)=>{
+        db.query("update  request set status = ? where id = ? ",[status,id],(err, result) => {
+            if (err || result == 0){
+                console.log(err)
+                resolve (-1);
+            }
+            else{
+                resolve (1);
+            }
+        })
+    });
+}
+
