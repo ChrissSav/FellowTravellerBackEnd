@@ -229,7 +229,7 @@ app.get('/registeruser/:name/:birthday/:email/:password/:phone', async (req, res
             res.send(error_handling("yparxei xristi me auto to email"));
         }
         else if (await RegisterUser(name,birthday,email,password,phone)){
-            res.send(success_handling("ytf"));
+            res.send(success_handling(await getUserid(email)));
         }else{
             res.send(error_handling("υπαρχει ηδη λογαριασμος με αυτο το μαιλ"));
         }
@@ -238,6 +238,19 @@ app.get('/registeruser/:name/:birthday/:email/:password/:phone', async (req, res
     }
 });
 
+function getUserid(email){
+    return new Promise((resolve,reject)=>{
+        db.query("select id drom users where email= ?", 
+        [email],(err, result) => {
+            if (err){
+                resolve(0);
+            }
+		    else{
+                resolve(result.id);
+            }
+        })
+    });
+}
 function RegisterUser(name,birthday,email,password,phone){
     return new Promise((resolve,reject)=>{
         db.query("INSERT INTO users (name,birthday, email, password,phone) VALUES (?,?,?,?,?)", 
