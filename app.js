@@ -634,8 +634,8 @@ function getTripByfilter(from,to){
         let q = "select fellowtraveller.trips.* "+
         "from fellowtraveller.trips left join fellowtraveller.users_and_trips "+
         " on fellowtraveller.trips.id = fellowtraveller.users_and_trips.trip_id "+
-        "   where (fellowtraveller.trips.ffrom = ? and fellowtraveller.trips.tto = ?) AND fellowtraveller.users_and_trips.trip_id is null "+
-        "  and fellowtraveller.trips.id NOT IN "+
+        " where (fellowtraveller.trips.ffrom = ? and fellowtraveller.trips.tto = ?) AND fellowtraveller.users_and_trips.trip_id is null "+
+        " and fellowtraveller.trips.id NOT IN "+
         "  (select fellowtraveller.trips.id"+
         "     from fellowtraveller.trips left join fellowtraveller.request"+
         "         on fellowtraveller.trips.id = fellowtraveller.request.trip_id"+
@@ -965,4 +965,62 @@ function ChangeRequestStatus(id,status){
         })
     });
 }
+
+
+
+
+
+
+
+//========================Notification=================
+
+//Register
+app.get('/registernotification/:target_id/:user_id/:trip_id',async  (req ,res) => {
+    let status = await RegisterNotification(req.params.target_id,req.params.user_id,req.params.trip_id);
+    if (status){
+        res.send(success_handling("success"));
+    }else{
+        res.send(error_handling("error"));
+    }
+});
+function RegisterNotification(target_id,user_id,trip_id){
+    return new Promise((resolve,reject)=>{
+        db.query("insert into notification (target_id,user_id,trip_id) values (?,?,?)",
+        [target_id,user_id,trip_id],(err, result) => {
+            if (err || result == 0){
+                resolve (false);
+            }
+            else{
+                resolve (true);
+            }
+        })
+    });
+}
+
+//ChangeStatus
+app.get('/changestatusnotification/:id',async  (req ,res) => {
+    let status = await ChangeStatusNotification(req.params.id);
+    if (status){
+        res.send(success_handling("success"));
+    }else{
+        res.send(error_handling("error"));
+    }
+});
+function ChangeStatusNotification(id){
+    return new Promise((resolve,reject)=>{
+        db.query("update notification set status = 'true' where id = ?",
+        [id,],(err, result) => {
+            if (err || result == 0){
+                resolve (false);
+            }
+            else{
+                resolve (true);
+            }
+        })
+    });
+}
+
+
+
+
 
