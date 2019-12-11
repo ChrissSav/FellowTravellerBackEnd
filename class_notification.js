@@ -1,11 +1,22 @@
 class Notification{
     constructor(notification){
         this.id = notification.id,
+        this.target = notification.target,
         this.user = notification.user,
-        this.trip = notification.trip,
-        this.description = notification.description,
-        this.status = notification.status
+        this.trip = notification.trip
+        
+    }
+
+
+    setTrip(trip){
+        this.trip=(trip);
+    }
+    
+    setTarget(target){
+        this.target=(target);
+    }
+    setUser(user){
+        this.user=(user);
     }
 }
-
 module.exports = Notification;

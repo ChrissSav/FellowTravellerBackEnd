@@ -3,7 +3,7 @@ const mysql = require('mysql');
 let error_handling = require('./error_handling');
 let success_handling = require('./success_handling');
 let class_trip = require('./class_trip');
-let class_user = require('./class_user');
+let class_notification = require('./class_notification');
 
 const db = mysql.createConnection({
     host: 'localhost',
@@ -142,6 +142,23 @@ app.get('/users', (req,res) => {
  function getUser(id){
     return new Promise((resolve,reject)=>{
         db.query('Select * from users where email = ?',[id],(error,result) => {
+            if(result.length > 0){
+                //let data = JSON.parse(result[0]);
+              //  let data = JSON.parse(JSON.stringify(result[0]));
+              //  console.log(data); 
+                resolve(result);
+            }
+            else{
+              //  console.log(error_handling("There is no user with these elements"));
+                resolve("There is no user with these elements");
+            }
+        })
+    });
+}
+
+function getUserById(id){
+    return new Promise((resolve,reject)=>{
+        db.query('Select * from users where id = ?',[id],(error,result) => {
             if(result.length > 0){
                 //let data = JSON.parse(result[0]);
               //  let data = JSON.parse(JSON.stringify(result[0]));
@@ -1009,7 +1026,7 @@ app.get('/changestatusnotification/:id',async  (req ,res) => {
 function ChangeStatusNotification(id){
     return new Promise((resolve,reject)=>{
         db.query("update notification set status = 'true' where id = ?",
-        [id,],(err, result) => {
+        [id],(err, result) => {
             if (err || result == 0){
                 resolve (false);
             }
@@ -1021,6 +1038,63 @@ function ChangeStatusNotification(id){
 }
 
 
+//Send Notification Item
+
+app.get('/getnotification/:target_id',async  (req ,res) => {
+    var id = req.params.target_id;
+    let l = await GetNotificationOfUser(id);
+    if (l==0){
+        res.send(error_handling(""));
+    }
+    else{
+        var teliko=[];
+        var notification = l;
+        notification = JSON.parse(JSON.stringify(notification));
+         for (var i = 0; i<notification.length; i++) {
+            var currentNotification = new class_notification(notification[i]);
+            var target = await getUserById(id);
+            currentNotification.setTarget(target[0]);
+            target = await getUserById(notification[0].user_id);
+            currentNotification.setUser(target[0]);
+            var trip = await getTrip(notification[0].trip_id);
+            trip = JSON.parse(JSON.stringify(trip[0]));
+            trip = new class_trip(trip);
+            currentNotification.setTrip(trip)
+            teliko.push(currentNotification);
+        }
+        res.send(teliko);
+    }
+});
 
 
+function GetNotificationOfUser(id){
+    return new Promise((resolve,reject)=>{
+        db.query("select * from notification where target_id = ?",
+        [id],(err, result) => {
+            
+            if (err || result == 0){
+                resolve (0);
+            }
+            else{
+                resolve (result);
+            }
+        })
+    });
+}
 
+function getUserById(id){
+    return new Promise((resolve,reject)=>{
+        db.query('Select * from users where id = ?',[id],(error,result) => {
+            if(result.length > 0){
+                //let data = JSON.parse(result[0]);
+              //  let data = JSON.parse(JSON.stringify(result[0]));
+              //  console.log(data); 
+                resolve(result);
+            }
+            else{
+              //  console.log(error_handling("There is no user with these elements"));
+                resolve("There is no user with these elements");
+            }
+        })
+    });
+}
