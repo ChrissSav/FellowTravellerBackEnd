@@ -625,7 +625,7 @@ app.get('/gettripbyfilter/:from/:to',async  (req ,res) => {
     //console.log("gettripbyfilter");
     let l = await getTripByfilter(req.params.from,req.params.to);
     if (l==0){
-        res.send(error_handling(""));
+        res.send([]);
        // console.log("teliko : "+0);
     }
     else{
@@ -648,21 +648,14 @@ app.get('/gettripbyfilter/:from/:to',async  (req ,res) => {
 });
 function getTripByfilter(from,to){
     return new Promise((resolve,reject)=>{
-        let q = "select fellowtraveller.trips.* "+
-        "from fellowtraveller.trips left join fellowtraveller.users_and_trips "+
-        " on fellowtraveller.trips.id = fellowtraveller.users_and_trips.trip_id "+
-        " where (fellowtraveller.trips.ffrom = ? and fellowtraveller.trips.tto = ?) AND fellowtraveller.users_and_trips.trip_id is null "+
-        " and fellowtraveller.trips.id NOT IN "+
-        "  (select fellowtraveller.trips.id"+
-        "     from fellowtraveller.trips left join fellowtraveller.request"+
-        "         on fellowtraveller.trips.id = fellowtraveller.request.trip_id"+
-        "             where fellowtraveller.request.trip_id = fellowtraveller.request.trip_id );"
+        let q = "select trips.* from trips left join users_and_trips on trips.id = users_and_trips.trip_id "+
+        " where (trips.ffrom like '%"+from+"%' and trips.tto like '%"+to+"%') AND users_and_trips.trip_id is null "+
+        " and trips.id NOT IN  (select trips.id from trips left join request"+
+        "         on trips.id = request.trip_id where request.trip_id = request.trip_id );";
         //let q = "select * from trips where ffrom = "+from+" and tto =  "+to;
         //db.query("select * from trips where ffrom = ? and tto = ? ",[from,to],(err, result) => {
-            
-        db.query(q,[from,to],(err, result) => {
+        db.query(q,(err, result) => {
             if (err || result == 0){
-                
                 resolve (0);
             }
             else{
