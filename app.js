@@ -978,7 +978,32 @@ function ChangeRequestStatus(id,status){
 
 
 
+app.get('/getrequest/:trip_id',async  (req ,res) => {
+    var id = req.params.trip_id;
+    let l = await GetRequestOfTrip(id);
+    if (l==0){
+        res.send([]);
+    }
+    else{
+        res.send(l);
+    }
+});
 
+
+function GetRequestOfTrip(id){
+    return new Promise((resolve,reject)=>{
+        let q = "select users.* from users join request"+
+            " on users.id = request.creator_id  where request.trip_id = "+id;
+        db.query(q,(err, result) => {
+            if (err || result == 0){
+                resolve (0);
+            }
+            else{
+                resolve (result);
+            }
+        })
+    });
+}
 
 
 
