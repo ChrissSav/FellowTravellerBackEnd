@@ -854,7 +854,54 @@ async function getUsersOfTrip(trip_id){
         });
     } 
 }
-//===============================================
+//ProsforesFragment
+
+app.get('/gettripsofuser/:id/',async  (req ,res) => {
+    var id = req.params.id;
+    let trips = await getTripsOfUser(id);
+    if(trips==0){
+        res.send([])
+    }else{
+            var teliko=[];
+            trips = JSON.parse(JSON.stringify(trips));
+            for (var i = 0; i <trips.length; i++) {
+                var  requests = await GetRequestOfTrip(trips[i].id);
+                requests = JSON.parse(JSON.stringify(requests));
+                var currentTrip = new class_trip(trips[i]);
+                var creator = await getTripCreator(trips[i].id);
+                creator = JSON.parse(JSON.stringify(creator[0]));
+                var users = await getUsersOfTrip(trips[i].id);
+                users = JSON.parse(JSON.stringify(users));
+                currentTrip.setPassengers(users);
+                currentTrip.setCreator(creator);
+                if(requests==0){
+                    requests=[];
+                }
+                currentTrip.setRequests(requests)
+                teliko.push(currentTrip);
+            }
+        res.send(teliko);
+    }
+});
+async function getTripsOfUser(user_id){
+   // if(!await checkIfExistInTable("trips","id",trip_id)){
+   //     return error_handling("current trip does't exist")
+   // }else{
+        return new Promise((resolve,reject) => {
+            let q = "select * from trips where creator_id ="+user_id;
+            db.query(q,(err, result) => {
+                if (err || result == 0){
+                   // console.log(false);
+                    resolve (0);
+                }
+                else{
+                  //  console.log(true);
+                    resolve (result);
+                }
+            })
+        });
+   // } 
+}
 //==================Rating=====================
 app.get('/rate/:user_id/:target_id/:num_of_stars/:type',async (req ,res) => {
     
@@ -1059,9 +1106,11 @@ function ChangeStatusNotification(id){
 //Send Notification Item
 
 app.get('/getnotification/:target_id',async  (req ,res) => {
+    console.log("getnotification/:target_id = "+ req.params.target_id);
     var id = req.params.target_id;
     let l = await GetNotificationOfUser(id);
     if (l==0){
+        console.log("error");
         res.send(error_handling(""));
     }
     else{
@@ -1074,17 +1123,40 @@ app.get('/getnotification/:target_id',async  (req ,res) => {
             currentNotification.setTarget(target[0]);
             target = await getUserById(notification[0].user_id);
             currentNotification.setUser(target[0]);
-            var trip = await getTrip(notification[0].trip_id);
+            var trip = await getTripN(notification[0].trip_id);
             trip = JSON.parse(JSON.stringify(trip[0]));
             trip = new class_trip(trip);
+            var creator = await getTripCreator(trip.creator_id);
+            trip.setCreator(creator[0])
+            var users = await getUsersOfTrip(trip.id);
+            users = JSON.parse(JSON.stringify(users));
+            trip.setPassengers(users);
+            delete trip.creator_id;
+            delete currentNotification.target;
             currentNotification.setTrip(trip)
             teliko.push(currentNotification);
         }
+        console.log("teliko");
+
         res.send(teliko);
     }
 });
 
-
+function getTripN(trip_id){
+    return new Promise((resolve,reject)=>{
+        let q ="select id,ffrom ,tto ,date,time,"+
+        "description,max_seats,current_num_of_seats,current_num_of_bags,max_bags,creator_id,"+
+        "rate,state from trips where id ="+trip_id;
+        db.query(q,(err, result) => {
+            if (err || result == 0){
+                resolve (err);
+            }
+            else{
+                resolve (result);
+            }
+        })
+    });
+}
 function GetNotificationOfUser(id){
     return new Promise((resolve,reject)=>{
         db.query("select * from notification where target_id = ?",
