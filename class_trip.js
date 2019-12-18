@@ -7,17 +7,16 @@ class Trip{
     this.time =trip.time,
     this.creator={},
     this.passengers = [],
+    this.requests = trip.requests,
     this.description= trip.description,
     this.max_seats= trip.max_seats,
     this.current_num_of_seats= trip.current_num_of_seats,
-    this.requests = trip.requests,
     this.max_bags=trip.max_bags,
     this.current_num_of_bags= trip.current_num_of_bags,
     this.rate = trip.rate,
     this.state = trip.state,
     this.creator_id = trip.creator_id
   }
-
 
   setPassengers(passengers){
     this.passengers=(passengers);

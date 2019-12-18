@@ -5,6 +5,7 @@ let success_handling = require('./success_handling');
 let class_trip = require('./class_trip');
 let class_notification = require('./class_notification');
 
+
 const db = mysql.createConnection({
     host: 'localhost',
     user: 'root',
@@ -636,7 +637,7 @@ app.get('/gettripbyfilter/:from/:to',async  (req ,res) => {
             var currentTrip = new class_trip(trips[i]);
             var creator = await getTripCreator(trips[i].id);
             creator = JSON.parse(JSON.stringify(creator[0]));
-            var users = await getUsersOfTrip(trips[i].id);
+            var users = await getPassengersOfTrip(trips[i].id);
             users = JSON.parse(JSON.stringify(users));
             currentTrip.setPassengers(users);
             currentTrip.setCreator(creator);
@@ -669,7 +670,7 @@ app.get('/gettrip/:id',async  (req ,res) => {
         var trip = await getTrip(req.params.id);
         trip = JSON.parse(JSON.stringify(trip[0]));
         trip = new class_trip(trip);
-        var users = await getUsersOfTrip(req.params.id);
+        var users = await getPassengersOfTrip(req.params.id);
         var creator = await getTripCreator(req.params.id);
         creator = JSON.parse(JSON.stringify(creator[0]));
         users = JSON.parse(JSON.stringify(users));
@@ -696,7 +697,7 @@ app.get('/gettrips',async  (req ,res) => {
             var currentTrip = new class_trip(trips[i]);
             var creator = await getTripCreator(trips[i].id);
             creator = JSON.parse(JSON.stringify(creator[0]));
-            var users = await getUsersOfTrip(trips[i].id);
+            var users = await getPassengersOfTrip(trips[i].id);
             users = JSON.parse(JSON.stringify(users));
             currentTrip.setPassengers(users);
             currentTrip.setCreator(creator);
@@ -722,7 +723,7 @@ app.get('/gettripstakespart/:user_id',async  (req ,res) => {
             var currentTrip = new class_trip(trips[i]);
             var creator = await getTripCreator(trips[i].id);
             creator = JSON.parse(JSON.stringify(creator[0]));
-            var users = await getUsersOfTrip(trips[i].id);
+            var users = await getPassengersOfTrip(trips[i].id);
             users = JSON.parse(JSON.stringify(users));
             currentTrip.setPassengers(users);
             currentTrip.setCreator(creator);
@@ -801,7 +802,7 @@ function getTrip(trip_id){
 
 function getTripCreator(trip_id){
      return new Promise((resolve,reject)=>{
-         let q ="select users.* "+
+         let q ="select users.id,users.name,users.rate,users.num_of_travels_offered, users.num_of_travels_takespart  "+
          "from users join trips "+
          "on users.id = trips.creator_id"+
          " where trips.id="+trip_id;
@@ -827,18 +828,18 @@ app.get('/getrateoftrip/:id/',async  (req ,res) => {
     res.send(success_handling(l+""));
 });
 //------------------------------------------------
-app.get('/getusersoftrip/:id/',async  (req ,res) => {
-    let l = await getUsersOfTrip(req.params.id);
+app.get('/getpassengersoftrip/:id/',async  (req ,res) => {
+    let l = await getPassengersOfTrip(req.params.id);
    // getUsersOfTrip(req.params.id,res);
     res.send(l);
     //res.send(success_handling("dgfgfregr"));
 });
-async function getUsersOfTrip(trip_id){
+async function getPassengersOfTrip(trip_id){
     if(!await checkIfExistInTable("trips","id",trip_id)){
         return error_handling("current trip does't exist")
     }else{
         return new Promise((resolve,reject) => {
-            let q = "select users.* "+
+            let q = "select users.id,users.name,users.rate,users.num_of_travels_offered, users.num_of_travels_takespart "+
             "from users join users_and_trips on users.id = users_and_trips.user_id"+
             " where users_and_trips.trip_id = "+trip_id;
             db.query(q,(err, result) => {
@@ -862,24 +863,25 @@ app.get('/gettripsofuser/:id/',async  (req ,res) => {
     if(trips==0){
         res.send([])
     }else{
-            var teliko=[];
-            trips = JSON.parse(JSON.stringify(trips));
-            for (var i = 0; i <trips.length; i++) {
-                var  requests = await GetRequestOfTrip(trips[i].id);
-                requests = JSON.parse(JSON.stringify(requests));
-                var currentTrip = new class_trip(trips[i]);
-                var creator = await getTripCreator(trips[i].id);
-                creator = JSON.parse(JSON.stringify(creator[0]));
-                var users = await getUsersOfTrip(trips[i].id);
-                users = JSON.parse(JSON.stringify(users));
-                currentTrip.setPassengers(users);
-                currentTrip.setCreator(creator);
-                if(requests==0){
-                    requests=[];
-                }
-                currentTrip.setRequests(requests)
-                teliko.push(currentTrip);
+        var teliko=[];
+        trips = JSON.parse(JSON.stringify(trips));
+        for (var i = 0; i <trips.length; i++) {
+            var requests = await GetRequestOfTrip(trips[i].id);
+            requests = JSON.parse(JSON.stringify(requests));
+            var currentTrip = new class_trip(trips[i]);
+            var creator = await getTripCreator(trips[i].id);
+            creator = JSON.parse(JSON.stringify(creator[0]));
+            var users = await getPassengersOfTrip(trips[i].id);
+            users = JSON.parse(JSON.stringify(users));
+            currentTrip.setPassengers(users);
+            currentTrip.setCreator(creator);
+            if(requests==0){
+                requests=[];
             }
+            delete currentTrip.creator_id;
+            currentTrip.setRequests(requests)
+            teliko.push(currentTrip);
+        }
         res.send(teliko);
     }
 });
@@ -963,7 +965,6 @@ app.get('/rate/:user_id/:target_id/:num_of_stars/:type',async (req ,res) => {
 
 //Rates
 
-// Δοκιμαστικό Commit
 function registerRate(user_id,target_id,num_of_stars,type,res){
     db.query("INSERT INTO ratings (user_id, target_id, num_of_stars,type) VALUES (?,?,?,?)", 
         [user_id, target_id,num_of_stars,type],(err, result) => {
@@ -1039,7 +1040,7 @@ app.get('/getrequest/:trip_id',async  (req ,res) => {
 
 function GetRequestOfTrip(id){
     return new Promise((resolve,reject)=>{
-        let q = "select users.* from users join request"+
+        let q = "select users.id,users.name,users.rate,users.num_of_travels_offered, users.num_of_travels_takespart from users join request"+
             " on users.id = request.creator_id  where request.trip_id = "+id;
         db.query(q,(err, result) => {
             if (err || result == 0){
@@ -1106,11 +1107,9 @@ function ChangeStatusNotification(id){
 //Send Notification Item
 
 app.get('/getnotification/:target_id',async  (req ,res) => {
-    console.log("getnotification/:target_id = "+ req.params.target_id);
     var id = req.params.target_id;
     let l = await GetNotificationOfUser(id);
     if (l==0){
-        console.log("error");
         res.send(error_handling(""));
     }
     else{
@@ -1119,25 +1118,26 @@ app.get('/getnotification/:target_id',async  (req ,res) => {
         notification = JSON.parse(JSON.stringify(notification));
          for (var i = 0; i<notification.length; i++) {
             var currentNotification = new class_notification(notification[i]);
-            var target = await getUserById(id);
-            currentNotification.setTarget(target[0]);
-            target = await getUserById(notification[0].user_id);
-            currentNotification.setUser(target[0]);
-            var trip = await getTripN(notification[0].trip_id);
-            trip = JSON.parse(JSON.stringify(trip[0]));
-            trip = new class_trip(trip);
-            var creator = await getTripCreator(trip.creator_id);
-            trip.setCreator(creator[0])
-            var users = await getUsersOfTrip(trip.id);
-            users = JSON.parse(JSON.stringify(users));
-            trip.setPassengers(users);
-            delete trip.creator_id;
-            delete currentNotification.target;
-            currentNotification.setTrip(trip)
+            var current_trip = await getTripN(notification[i].trip_id);
+            var user = await getUserById(notification[i].user_id)
+            currentNotification.setUser(user[0])
+            current_trip = new class_trip(current_trip[0])
+            var creator = await getTripCreator(notification[i].trip_id);
+            creator = JSON.parse(JSON.stringify(creator[0]));
+            var passengers = await getPassengersOfTrip(notification[i].trip_id);
+            passengers = JSON.parse(JSON.stringify(passengers));
+            current_trip.setPassengers(passengers);
+            current_trip.setCreator(creator);
+            var requests = await GetRequestOfTrip(notification[i].trip_id);
+            requests = JSON.parse(JSON.stringify(requests));
+            if(requests==0){
+                requests=[];
+            }        
+            current_trip.setRequests(requests);
+            delete current_trip.creator_id;
+            currentNotification.setTrip(current_trip)
             teliko.push(currentNotification);
         }
-        console.log("teliko");
-
         res.send(teliko);
     }
 });
@@ -1174,7 +1174,7 @@ function GetNotificationOfUser(id){
 
 function getUserById(id){
     return new Promise((resolve,reject)=>{
-        db.query('Select * from users where id = ?',[id],(error,result) => {
+        db.query('Select id,name,rate,num_of_travels_offered,num_of_travels_takespart from users where id = ?',[id],(error,result) => {
             if(result.length > 0){
                 //let data = JSON.parse(result[0]);
               //  let data = JSON.parse(JSON.stringify(result[0]));
