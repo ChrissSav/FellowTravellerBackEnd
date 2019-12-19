@@ -978,7 +978,19 @@ function registerRate(user_id,target_id,num_of_stars,type,res){
 }
 
 //request
-
+//Register to Trip
+async function RegisterUserToTrip(target_id,user_id,trip_id){
+    // register requst
+    let register_status = await RegisterRequest(user_id,trip_id);
+    if (register_status==1){
+        //send notifcation  makis
+        let notification_status = await RegisterNotification(target_id,user_id,req.trip_id);
+        if (notification_status){
+            return true;
+        }     
+    }
+    return false;
+}
 
 app.get('/registerrequest/:creator_id/:trip_id',async  (req ,res) => {
     let status = await RegisterRequest(req.params.creator_id,req.params.trip_id);
