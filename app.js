@@ -665,6 +665,9 @@ function getTripByfilter(from,to){
         })
     });
 }
+
+
+
 app.get('/gettrip/:id',async  (req ,res) => {
     try{
         var trip = await getTrip(req.params.id);
@@ -903,6 +906,34 @@ async function getTripsOfUser(user_id){
             })
         });
    // } 
+}
+
+
+app.get('/registertotrip/:user_id/:trip_id',async  (req ,res) => {
+    var user_id = req.params.user_id;
+    var trip_id = req.params.trip_id;
+    if (await RegisterUserToTripB(user_id,trip_id)){
+        res.send(success_handling("suuces"));
+    }
+    else{
+        res.send(error_handling("error_handling"));
+    }
+});
+
+function RegisterUserToTripB(user_id,trip_id){
+   return new Promise((resolve,reject) => {
+        let q = "insert into users_and_trips (user_id,trip_id) VALUES ("+user_id+","+trip_id+" )";
+        db.query(q,(err, result) => {
+            if (err || result == 0){
+               // console.log(false);
+                resolve (false);
+            }
+            else{
+              //  console.log(true);
+                resolve (true);
+            }
+        })
+    });
 }
 //==================Rating=====================
 app.get('/rate/:user_id/:target_id/:num_of_stars/:type',async (req ,res) => {
@@ -1199,4 +1230,90 @@ function getUserById(id){
             }
         })
     });
+}
+
+
+
+app.get('/g/:from/:to/:date_from/:date_to/:time_from/:time_to/:seats_min/:seats_max/:bags_min/:bags_max',async  (req ,res) => {
+
+        var list = [];
+        list.push(req.params.from);
+        list.push(req.params.to);
+        list.push(req.params.date_from);
+        list.push(req.params.date_to);
+        list.push(req.params.time_from);
+        list.push(req.params.time_to);
+        list.push(req.params.seats_min);
+        list.push(req.params.seats_max);
+        list.push(req.params.bags_min);
+        list.push(req.params.bags_max);
+        
+        list = list.filter(item => item != 0);
+
+        console.log(list)
+        res.send("from/:to/:date_from/:date_to/:time_from/:time_to/:seats_min/:seats_max/:bags_min/:bags_max")
+        var list2 = []
+        for (var i=0; i<list.length; i++){
+            switch(i) {
+                case 0:
+                    
+                    if(list[i]!=0){
+                        list2.push("fromm = "+list[i]);
+                    }
+                  break;
+                case 1:
+                    if(list[i]!=0){
+                        list2.push("to = "+list[i]);
+                    }
+                    break;
+                case 2:
+                    if(list[i]!=0){
+                        list2.push("date_from = "+list[i]);
+                    }
+                break;
+                case 3:
+                  // code block
+                  break;
+                case 4:
+                  // code block
+                  break;
+                case 5:
+                // code block
+                break;
+                case 6:
+                  // code block
+                  break;
+                case 7:
+                  // code block
+                  break;
+                case 8:
+                // code block
+                break;
+                default:
+                  // code block
+              }
+        }
+        console.log(list2)
+    });
+    /*var from = req.params.from;
+    var to = req.params.to;
+    var date_from = req.params.date_from;
+    var date_to = req.params.date_to;
+    var time_from = req.params.time_from;
+    var time_to = req.params.time_to;
+    var seats_min = req.params.seats_min;
+    var seats_max = req.params.seats_max;
+    var bags_min = req.params.bags_min;
+    var bags_max = req.params.bags_max;*/
+
+
+    /**let l = await GetNotificationOfUser(id);
+    if (l==0){
+        res.send(error_handling(""));
+    }*/
+
+
+
+function trip(fom,to,date_from,date_to,time_from,){
+
 }
