@@ -909,16 +909,21 @@ async function getTripsOfUser(user_id){
 }
 
 
-/*app.get('/registertotrip/:user_id/:trip_id',async  (req ,res) => {
+app.get('/registerrequesttotrip/:user_id/:target_id/:trip_id',async  (req ,res) => {
     var user_id = req.params.user_id;
     var trip_id = req.params.trip_id;
-    if (await RegisterUserToTrip(user_id,trip_id)){
+    var target_id = req.params.target_id;
+
+    console.log("Mpika \n"+user_id,target_id,trip_id)
+    let flag = await RegisterUserToTrip(user_id,target_id,trip_id);
+    console.log("flag : "+flag)
+    if (flag){
         res.send(success_handling("success"));
     }
     else{
         res.send(error_handling("error_handling"));
     }
-});*/
+});
 
 function RegisterPassengerToTrip(user_id,trip_id){
    return new Promise((resolve,reject) => {
@@ -937,17 +942,26 @@ function RegisterPassengerToTrip(user_id,trip_id){
 }
 
 //Register to Trip
-async function RegisterUserToTrip(target_id,user_id,trip_id){
+async function RegisterUserToTrip(user_id,target_id,trip_id){
     // register requst
-    let register_status = await RegisterRequest(user_id,trip_id);
-    if (register_status==1){
-        //send notifcation  makis
-        let notification_status = await RegisterNotification(target_id,user_id,req.trip_id);
-        if (notification_status){
-            return true;
-        }     
+    try{
+        let register_status = await RegisterRequest(user_id,trip_id);
+        
+        if (register_status==1){
+            console.log("register_status : "+register_status)
+            //send notifcation  makis
+            let notification_status = await RegisterNotification(target_id,user_id,trip_id);
+            if (notification_status){
+                console.log("notification_status true ")
+                return true;
+            }else{
+                return false;
+            }     
+        }
+        return false;
+    }catch(err){
+        console.log("error catch : "+register_status)
     }
-    return false;
 }
 //==================Rating=====================
 app.get('/rate/:user_id/:target_id/:num_of_stars/:type',async (req ,res) => {
@@ -1026,7 +1040,10 @@ function registerRate(user_id,target_id,num_of_stars,type,res){
 
 
 app.get('/registerrequest/:creator_id/:trip_id',async  (req ,res) => {
-    let status = await RegisterRequest(req.params.creator_id,req.params.trip_id);
+    let creator_id = req.params.creator_id;
+    let target_id = req.params.target_id;
+    let status = await RegisterRequest(creator_id,trip_id);
+
     if (status == 1){
         res.send(success_handling("success"));
     }else{
@@ -1034,12 +1051,12 @@ app.get('/registerrequest/:creator_id/:trip_id',async  (req ,res) => {
     }
 });
 function RegisterRequest(creator_id,target_id){
-    console.log("RegisterRequest"+"cr: "+ creator_id+"targ : "+target_id)
+    
+    console.log("RegisterRequest "+"cr: "+ creator_id+" targ : "+target_id)
     return new Promise((resolve,reject)=>{
         db.query("insert into request (creator_id,trip_id) VALUES (?,?) ",[creator_id,target_id],(err, result) => {
             if (err || result == 0){
                 console.log(err)
-
                 resolve (-1);
             }
             else{
@@ -1047,6 +1064,10 @@ function RegisterRequest(creator_id,target_id){
             }
         })
     });
+}
+
+async function RegRequestTotrip(){
+
 }
 
 app.get('/changerequeststatus/:user_id/:trip_id/:status',async  (req ,res) => {
@@ -1138,6 +1159,7 @@ function RegisterNotification(target_id,user_id,trip_id){
         [target_id,user_id,trip_id],(err, result) => {
             if (err || result == 0){
                 resolve (false);
+                console.log(err)
             }
             else{
                 resolve (true);
@@ -1157,7 +1179,7 @@ app.get('/changestatusnotification/:id',async  (req ,res) => {
 });
 function ChangeStatusNotification(id){
     return new Promise((resolve,reject)=>{
-        db.query("update notification set status = 'true' where id = ?",
+        db.query("update notification set status = 'read' where id = ?",
         [id],(err, result) => {
             if (err || result == 0){
                 resolve (false);
