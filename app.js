@@ -552,39 +552,37 @@ async function AddUserToTrip(user_id,trip_id,res){
     
 }
 
+
 app.get('/tripnum/:id',async  (req ,res) => {
    
     let l = await getTripCurrentNumOfPassenger(req.params.id);
     console.log(l);
     res.send(success_handling(l+""));
 });
-
 function getTripCurrentNumOfPassenger(trip_id){
     let num;
-    let q = "select current_num from trips where id ="+trip_id;
+    let q = "select current_num_of_seats from trips where id ="+trip_id;
     return new Promise((resolve,reject)=>{
         db.query(q,(err, result) => {
             if (err || result == 0){
-              //  console.log("num = -1;")
                 num = -1;
                 resolve(num);
             }
             else{
-               // console.log("num = result[0].current_num;")
-                num = result[0].current_num;
+                num = result[0].current_num_of_seats;
                 resolve(num);
             } 
         })
     });
 }
 
-async function IncreaseCurrentNumOFTrip(trip_id){
+async function IncreaseCurrentNumPassengersOFTrip(trip_id){
     let num = await getTripCurrentNumOfPassenger(trip_id)+1;
    // console.log("num ="+num);
     return new Promise((resolve,reject)=>{
-        db.query("update trips set current_num =? where id =?",[num,trip_id],(err, result) => {
+        db.query("update trips set current_num_of_seats =? where id =?",[num,trip_id],(err, result) => {
             if (err || result == 0){
-               // console.log(false);
+                console.log(err);
                 resolve (false);
             }
             else{
@@ -745,7 +743,7 @@ function getTripsTakePart(id){
     return new Promise((resolve,reject)=>{
         let q ="select trips.* from users_and_trips "+
         " join trips on users_and_trips.trip_id = trips.id "+
-        " where trips.creator_id= "+id;
+        " where gettripstakespart.user_id= "+id;
         db.query(q,(err, result) => {
             if (err || result == 0){
                resolve ([]);
@@ -860,7 +858,7 @@ async function getPassengersOfTrip(trip_id){
 }
 //ProsforesFragment
 
-app.get('/gettripsofuser/:id/',async  (req ,res) => {
+app.get('/getUserTrips/:id/',async  (req ,res) => {
     var id = req.params.id;
     let trips = await getTripsOfUser(id);
     if(trips==0){
@@ -888,6 +886,8 @@ app.get('/gettripsofuser/:id/',async  (req ,res) => {
         res.send(teliko);
     }
 });
+
+
 async function getTripsOfUser(user_id){
    // if(!await checkIfExistInTable("trips","id",trip_id)){
    //     return error_handling("current trip does't exist")
@@ -909,18 +909,18 @@ async function getTripsOfUser(user_id){
 }
 
 
-app.get('/registertotrip/:user_id/:trip_id',async  (req ,res) => {
+/*app.get('/registertotrip/:user_id/:trip_id',async  (req ,res) => {
     var user_id = req.params.user_id;
     var trip_id = req.params.trip_id;
-    if (await RegisterUserToTripB(user_id,trip_id)){
-        res.send(success_handling("suuces"));
+    if (await RegisterUserToTrip(user_id,trip_id)){
+        res.send(success_handling("success"));
     }
     else{
         res.send(error_handling("error_handling"));
     }
-});
+});*/
 
-function RegisterUserToTripB(user_id,trip_id){
+function RegisterPassengerToTrip(user_id,trip_id){
    return new Promise((resolve,reject) => {
         let q = "insert into users_and_trips (user_id,trip_id) VALUES ("+user_id+","+trip_id+" )";
         db.query(q,(err, result) => {
@@ -934,6 +934,20 @@ function RegisterUserToTripB(user_id,trip_id){
             }
         })
     });
+}
+
+//Register to Trip
+async function RegisterUserToTrip(target_id,user_id,trip_id){
+    // register requst
+    let register_status = await RegisterRequest(user_id,trip_id);
+    if (register_status==1){
+        //send notifcation  makis
+        let notification_status = await RegisterNotification(target_id,user_id,req.trip_id);
+        if (notification_status){
+            return true;
+        }     
+    }
+    return false;
 }
 //==================Rating=====================
 app.get('/rate/:user_id/:target_id/:num_of_stars/:type',async (req ,res) => {
@@ -1009,19 +1023,7 @@ function registerRate(user_id,target_id,num_of_stars,type,res){
 }
 
 //request
-//Register to Trip
-async function RegisterUserToTrip(target_id,user_id,trip_id){
-    // register requst
-    let register_status = await RegisterRequest(user_id,trip_id);
-    if (register_status==1){
-        //send notifcation  makis
-        let notification_status = await RegisterNotification(target_id,user_id,req.trip_id);
-        if (notification_status){
-            return true;
-        }     
-    }
-    return false;
-}
+
 
 app.get('/registerrequest/:creator_id/:trip_id',async  (req ,res) => {
     let status = await RegisterRequest(req.params.creator_id,req.params.trip_id);
@@ -1032,10 +1034,12 @@ app.get('/registerrequest/:creator_id/:trip_id',async  (req ,res) => {
     }
 });
 function RegisterRequest(creator_id,target_id){
+    console.log("RegisterRequest"+"cr: "+ creator_id+"targ : "+target_id)
     return new Promise((resolve,reject)=>{
         db.query("insert into request (creator_id,trip_id) VALUES (?,?) ",[creator_id,target_id],(err, result) => {
             if (err || result == 0){
                 console.log(err)
+
                 resolve (-1);
             }
             else{
@@ -1045,17 +1049,35 @@ function RegisterRequest(creator_id,target_id){
     });
 }
 
-app.get('/changerequeststatus/:id/:status',async  (req ,res) => {
-    let status = await ChangeRequestStatus(req.params.id,req.params.status);
+app.get('/changerequeststatus/:user_id/:trip_id/:status',async  (req ,res) => {
+    let st = req.params.status;
+    let trip_id = req.params.trip_id;
+    let user_id = req.params.user_id;
+    console.log("changerequeststatus")
+    console.log("st : "+st)
+    console.log("user_id : "+user_id)
+    console.log("trip_id : "+trip_id)
+
+    let status = await ChangeRequestStatus(user_id,trip_id,st);
     if (status == 1){
-        res.send(success_handling("success"));
+        if(st=="accept"){
+            //takis
+            if (await RegisterPassengerToTrip(user_id,trip_id)){
+                 if(await IncreaseCurrentNumPassengersOFTrip(trip_id))
+                    res.send(success_handling("success"));
+                else
+                    res.send(error_handling("error"));
+            }else{
+                res.send(error_handling("error"));
+            }
+        }
     }else{
         res.send(error_handling("error"));
     }
 });
-function ChangeRequestStatus(id,status){
+function ChangeRequestStatus(user_id,trip_id,status){
     return new Promise((resolve,reject)=>{
-        db.query("update  request set status = ? where id = ? ",[status,id],(err, result) => {
+        db.query("update  request set status = ? where creator_id = ? and trip_id = ?",[status,user_id,trip_id],(err, result) => {
             if (err || result == 0){
                 console.log(err)
                 resolve (-1);
@@ -1084,7 +1106,7 @@ app.get('/getrequest/:trip_id',async  (req ,res) => {
 function GetRequestOfTrip(id){
     return new Promise((resolve,reject)=>{
         let q = "select users.id,users.name,users.rate,users.num_of_travels_offered, users.num_of_travels_takespart from users join request"+
-            " on users.id = request.creator_id  where request.trip_id = "+id;
+            " on users.id = request.creator_id where  request.status = 'stand_by' and request.trip_id = "+id;
         db.query(q,(err, result) => {
             if (err || result == 0){
                 resolve (0);
@@ -1095,6 +1117,7 @@ function GetRequestOfTrip(id){
         })
     });
 }
+
 
 
 
@@ -1202,7 +1225,7 @@ function getTripN(trip_id){
 }
 function GetNotificationOfUser(id){
     return new Promise((resolve,reject)=>{
-        db.query("select * from notification where target_id = ?",
+        db.query("select * from notification where target_id = ? and status='true'",
         [id],(err, result) => {
             
             if (err || result == 0){
