@@ -29,6 +29,9 @@ class Trip{
     return this.passengers;
   }
 
+  setDate(date){
+    this.date = date;
+  }
   getCreator(){
     return this.creator;
   }

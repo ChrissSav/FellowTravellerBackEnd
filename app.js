@@ -1074,11 +1074,6 @@ app.get('/changerequeststatus/:user_id/:trip_id/:status',async  (req ,res) => {
     let st = req.params.status;
     let trip_id = req.params.trip_id;
     let user_id = req.params.user_id;
-    console.log("changerequeststatus")
-    console.log("st : "+st)
-    console.log("user_id : "+user_id)
-    console.log("trip_id : "+trip_id)
-
     let status = await ChangeRequestStatus(user_id,trip_id,st);
     if (status == 1){
         if(st=="accept"){
@@ -1279,86 +1274,130 @@ function getUserById(id){
 
 
 
-app.get('/g/:from/:to/:date_from/:date_to/:time_from/:time_to/:seats_min/:seats_max/:bags_min/:bags_max',async  (req ,res) => {
+app.get('/getTripsFilter/:from/:to/:date_from/:date_to/:time_from/:time_to/:seats_min/:seats_max/:bags_min/:bags_max/' +
+':rate_min/:rate_max/:price_min/:price_max',async  (req ,res) => {
 
         var list = [];
         list.push(req.params.from);
         list.push(req.params.to);
         list.push(req.params.date_from);
-        list.push(req.params.date_to);
+        list.push(req.params.date_to); 
         list.push(req.params.time_from);
         list.push(req.params.time_to);
         list.push(req.params.seats_min);
         list.push(req.params.seats_max);
         list.push(req.params.bags_min);
         list.push(req.params.bags_max);
-        
-        list = list.filter(item => item != 0);
+        list.push(req.params.rate_min);
+        list.push(req.params.rate_max);
+        list.push(req.params.price_min);
+        list.push(req.params.price_max);
 
-        console.log(list)
-        res.send("from/:to/:date_from/:date_to/:time_from/:time_to/:seats_min/:seats_max/:bags_min/:bags_max")
+        
+
+        //console.log(list)
+        //res.send("from/:to/:date_from/:date_to/:time_from/:time_to/:seats_min/:seats_max/:bags_min/:bags_max")
         var list2 = []
         for (var i=0; i<list.length; i++){
             switch(i) {
-                case 0:
-                    
+                case 0:                   
                     if(list[i]!=0){
-                        list2.push("fromm = "+list[i]);
+                        list2.push("ffrom = '"+list[i]+"'");
                     }
                   break;
                 case 1:
                     if(list[i]!=0){
-                        list2.push("to = "+list[i]);
+                        list2.push("tto = '"+list[i]+"'");
                     }
                     break;
                 case 2:
                     if(list[i]!=0){
-                        list2.push("date_from = "+list[i]);
+                        list2.push("date > '"+list[i]+"'");
                     }
-                break;
+                    break;
                 case 3:
-                  // code block
-                  break;
+                    if(list[i]!=0){
+                        list2.push("date < '"+list[i]+"'");
+                    }
+                    break;
                 case 4:
-                  // code block
-                  break;
+                    if(list[i]!=0){
+                        list2.push("time >  '"+list[i]+"'");
+                    }
+                    break;
                 case 5:
-                // code block
-                break;
+                    if(list[i]!=0){
+                        list2.push("time < '"+list[i]+"'");
+                    }
+                    break;
                 case 6:
-                  // code block
-                  break;
+                    if(list[i]!=0){
+                        list2.push("current_num_of_seats >= "+list[i]);
+                    }
+                    break;
                 case 7:
-                  // code block
-                  break;
+                    if(list[i]!=0){
+                        list2.push("current_num_of_seats <= "+list[i]);
+                    }
+                    break;
                 case 8:
-                // code block
-                break;
+                    if(list[i]!=0){
+                        list2.push("current_num_of_bags >= "+list[i]);
+                    }
+                    break;
+                case 9:
+                    if(list[i]!=0){
+                        list2.push("current_num_of_bags <= "+list[i]);
+                    }
+                    break;
+                case 10:
+                    if(list[i]!=0){
+                        list2.push("rate >= "+list[i]);
+                    }
+                    break;
+                case 11:
+                    if(list[i]!=0){
+                        list2.push("rate <= "+list[i]);
+                    }
+                    break;
+                case 12:
+                    if(list[i]!=0){
+                        list2.push("price >= "+list[i]);
+                    }
+                    break;
+                case 13:
+                    if(list[i]!=0){
+                        list2.push("price <= "+list[i]);
+                    }
+                    break;
                 default:
-                  // code block
+                    break;
               }
         }
-        console.log(list2)
+        res.send(list2)
+        var  m =  list2.toString();
+        m = m.split(",").join(" and ");
+        //console.log(m);
+        var date = req.params.date_to;
+        //ChangeFromatToDefault
+        date = ChangeFromatToDbDate(date);
+        console.log("DB date : "+date)
+        date = ChangeFromatToDefaultDate(date);
+        console.log("Default date : "+date)
+
     });
-    /*var from = req.params.from;
-    var to = req.params.to;
-    var date_from = req.params.date_from;
-    var date_to = req.params.date_to;
-    var time_from = req.params.time_from;
-    var time_to = req.params.time_to;
-    var seats_min = req.params.seats_min;
-    var seats_max = req.params.seats_max;
-    var bags_min = req.params.bags_min;
-    var bags_max = req.params.bags_max;*/
-
-
-    /**let l = await GetNotificationOfUser(id);
-    if (l==0){
-        res.send(error_handling(""));
-    }*/
+    
 
 
 
-function trip(fom,to,date_from,date_to,time_from,){
+function ChangeFromatToDbDate(date){
+    var d  = date.split("-");
+    var new_date = d[2]+"-"+d[1]+"-"+d[0]
+    return  (new_date);
+}
 
+function ChangeFromatToDefaultDate(date){
+    var d  = date.split("-");
+    var new_date = d[2]+"-"+d[1]+"-"+d[0]
+    return (new_date);
 }
