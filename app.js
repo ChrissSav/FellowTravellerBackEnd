@@ -400,7 +400,7 @@ async function UpdateUserNumOfTripOffer(user_id,num){
     });
 }
 //======================TripS========================
-app.get('/trips/:from/:to/:date/:time/:creator_id/:description/:max_seats/:max_bags', async(req ,res) => {
+app.get('/trips/:from/:to/:date/:time/:creator_id/:description/:max_seats/:max_bags/:price', async(req ,res) => {
     let from = req.params.from;
     let to = req.params.to;
     let date = req.params.date;
@@ -409,6 +409,7 @@ app.get('/trips/:from/:to/:date/:time/:creator_id/:description/:max_seats/:max_b
     let description = req.params.description;
     let max_seats = req.params.max_seats;
     let max_bags = req.params.max_bags;
+    let price = req.params.price;
     //console.log("to = "+to+"  legth = "+to.length);
 
    /* if(from===" "){
@@ -440,7 +441,7 @@ app.get('/trips/:from/:to/:date/:time/:creator_id/:description/:max_seats/:max_b
             res.send(success_handling("success"));
         }
     }*/
-    if(await registerTrip(from,to,date,time,creator_id,description,max_seats,max_bags)){
+    if(await registerTrip(from,to,date,time,creator_id,description,max_seats,max_bags,price)){
         res.send(success_handling(1,"success"));
         //console.log(success_handling(1,"success"))
     }
@@ -466,13 +467,13 @@ function updateTrippState(state,trip_id){
     });
 }
 
-function registerTrip(from,to,date,time,creator_id,description,max_seats,max_bags){
+function registerTrip(from,to,date,time,creator_id,description,max_seats,max_bags,price){
     return new Promise((resolve,reject)=>{
         date = ChangeFromat(date);
-        db.query("insert into trips (ffrom,tto,date,time,creator_id,description,max_seats,max_bags) VALUES (?,?,?,?,?,?,?,?)", 
-            [from,to,date,time,creator_id,description,max_seats,max_bags],(err, result) => {
+        db.query("insert into trips (ffrom,tto,date,time,creator_id,description,max_seats,max_bags,price) VALUES (?,?,?,?,?,?,?,?,?)", 
+            [from,to,date,time,creator_id,description,max_seats,max_bags,price],(err, result) => {
                 if (err || result == 0){
-
+                    console.log(err)
                     resolve(false);
                 }
                 else{
@@ -1301,11 +1302,7 @@ app.get('/getTripsFilter/:from/:to/:date_from/:date_to/:time_from/:time_to/:seat
         list.push(req.params.rate_max);
         list.push(req.params.price_min);
         list.push(req.params.price_max);
-
-        
-
-        //console.log(list)
-        //res.send("from/:to/:date_from/:date_to/:time_from/:time_to/:seats_min/:seats_max/:bags_min/:bags_max")
+    
         var list2 = []
         for (var i=0; i<list.length; i++){
             switch(i) {
@@ -1321,22 +1318,22 @@ app.get('/getTripsFilter/:from/:to/:date_from/:date_to/:time_from/:time_to/:seat
                     break;
                 case 2:
                     if(list[i]!=0){
-                        list2.push("date > '"+ChangeFromat(list[i])+"'");
+                        list2.push("date >= '"+ChangeFromat(list[i])+"'");
                     }
                     break;
                 case 3:
                     if(list[i]!=0){
-                        list2.push("date < '"+ChangeFromat(list[i])+"'");
+                        list2.push("date <= '"+ChangeFromat(list[i])+"'");
                     }
                     break;
                 case 4:
                     if(list[i]!=0){
-                        list2.push("time >  '"+list[i]+"'");
+                        list2.push("time >=  '"+list[i]+"'");
                     }
                     break;
                 case 5:
                     if(list[i]!=0){
-                        list2.push("time < '"+list[i]+"'");
+                        list2.push("time <= '"+list[i]+"'");
                     }
                     break;
                 case 6:
@@ -1383,20 +1380,54 @@ app.get('/getTripsFilter/:from/:to/:date_from/:date_to/:time_from/:time_to/:seat
                     break;
               }
         }
-        res.send(list2)
         var  m =  list2.toString();
         m = m.split(",").join(" and ");
-        //console.log(m);
-        var date = req.params.date_to;
-        //ChangeFromatToDefault
-        date = ChangeFromat(date);
-        console.log("DB date : "+date)
-        date = ChangeFromat(date);
-        console.log("Default date : "+date)
+        let l = await getTripByfilter(m);
+        if(l==0){
+            res.send([]);
+        }else{
 
+            var teliko=[];
+            var trips = l;
+            trips = JSON.parse(JSON.stringify(trips));
+            for (var i = 0; i <trips.length; i++) {
+                var currentTrip = new class_trip(trips[i]);
+                var date = currentTrip.getDate();
+                date = ChangeFromat(date);
+                currentTrip.setDate(date);
+                var creator = await getTripCreator(trips[i].id);
+                creator = JSON.parse(JSON.stringify(creator[0]));
+                var users = await getPassengersOfTrip(trips[i].id);
+                users = JSON.parse(JSON.stringify(users));
+                currentTrip.setPassengers(users);
+                currentTrip.setCreator(creator);
+                teliko.push(currentTrip);
+            }
+
+
+            res.send(teliko);
+        }
+        
     });
     
-
+    function getTripByfilter(query){
+        return new Promise((resolve,reject)=>{
+            let q = "select trips.* from trips left join users_and_trips on trips.id = users_and_trips.trip_id "+
+            " where ("+query+") AND users_and_trips.trip_id is null "+
+            " and trips.id NOT IN  (select trips.id from trips left join request"+
+            "         on trips.id = request.trip_id where request.trip_id = request.trip_id );";
+            //let q = "select * from trips where ffrom = "+from+" and tto =  "+to;
+            //db.query("select * from trips where ffrom = ? and tto = ? ",[from,to],(err, result) => {
+            db.query(q,(err, result) => {
+                if (err || result == 0){
+                    resolve (0);
+                }
+                else{
+                    resolve (result);
+                }
+            })
+        });
+    }
 
 
 function ChangeFromat(date){
