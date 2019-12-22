@@ -468,7 +468,7 @@ function updateTrippState(state,trip_id){
 
 function registerTrip(from,to,date,time,creator_id,description,max_seats,max_bags){
     return new Promise((resolve,reject)=>{
-
+        date = ChangeFromat(date);
         db.query("insert into trips (ffrom,tto,date,time,creator_id,description,max_seats,max_bags) VALUES (?,?,?,?,?,?,?,?)", 
             [from,to,date,time,creator_id,description,max_seats,max_bags],(err, result) => {
                 if (err || result == 0){
@@ -728,6 +728,9 @@ app.get('/gettripstakespart/:user_id',async  (req ,res) => {
             users = JSON.parse(JSON.stringify(users));
             currentTrip.setPassengers(users);
             currentTrip.setCreator(creator);
+            var date = currentTrip.getDate();
+            date = ChangeFromat(date);
+            currentTrip.setDate(date);
             teliko.push(currentTrip);
         }
         res.send(teliko);
@@ -743,7 +746,7 @@ function getTripsTakePart(id){
     return new Promise((resolve,reject)=>{
         let q ="select trips.* from users_and_trips "+
         " join trips on users_and_trips.trip_id = trips.id "+
-        " where gettripstakespart.user_id= "+id;
+        " where users_and_trips.user_id= "+id;
         db.query(q,(err, result) => {
             if (err || result == 0){
                resolve ([]);
@@ -870,6 +873,9 @@ app.get('/getUserTrips/:id/',async  (req ,res) => {
             var requests = await GetRequestOfTrip(trips[i].id);
             requests = JSON.parse(JSON.stringify(requests));
             var currentTrip = new class_trip(trips[i]);
+            var date = currentTrip.getDate();
+            date = ChangeFromat(date);
+            currentTrip.setDate(date);
             var creator = await getTripCreator(trips[i].id);
             creator = JSON.parse(JSON.stringify(creator[0]));
             var users = await getPassengersOfTrip(trips[i].id);
@@ -1205,6 +1211,9 @@ app.get('/getnotification/:target_id',async  (req ,res) => {
             var user = await getUserById(notification[i].user_id)
             currentNotification.setUser(user[0])
             current_trip = new class_trip(current_trip[0])
+            var date = current_trip.getDate();
+            date = ChangeFromat(date);
+            current_trip.setDate(date);
             var creator = await getTripCreator(notification[i].trip_id);
             creator = JSON.parse(JSON.stringify(creator[0]));
             var passengers = await getPassengersOfTrip(notification[i].trip_id);
@@ -1229,7 +1238,7 @@ function getTripN(trip_id){
     return new Promise((resolve,reject)=>{
         let q ="select id,ffrom ,tto ,date,time,"+
         "description,max_seats,current_num_of_seats,current_num_of_bags,max_bags,creator_id,"+
-        "rate,state from trips where id ="+trip_id;
+        "rate,state,price from trips where id ="+trip_id;
         db.query(q,(err, result) => {
             if (err || result == 0){
                 resolve (err);
@@ -1302,22 +1311,22 @@ app.get('/getTripsFilter/:from/:to/:date_from/:date_to/:time_from/:time_to/:seat
             switch(i) {
                 case 0:                   
                     if(list[i]!=0){
-                        list2.push("ffrom = '"+list[i]+"'");
+                        list2.push("ffrom like '%"+list[i]+"%'");
                     }
                   break;
                 case 1:
                     if(list[i]!=0){
-                        list2.push("tto = '"+list[i]+"'");
+                        list2.push("tto like '%"+list[i]+"%'");
                     }
                     break;
                 case 2:
                     if(list[i]!=0){
-                        list2.push("date > '"+list[i]+"'");
+                        list2.push("date > '"+ChangeFromat(list[i])+"'");
                     }
                     break;
                 case 3:
                     if(list[i]!=0){
-                        list2.push("date < '"+list[i]+"'");
+                        list2.push("date < '"+ChangeFromat(list[i])+"'");
                     }
                     break;
                 case 4:
@@ -1380,9 +1389,9 @@ app.get('/getTripsFilter/:from/:to/:date_from/:date_to/:time_from/:time_to/:seat
         //console.log(m);
         var date = req.params.date_to;
         //ChangeFromatToDefault
-        date = ChangeFromatToDbDate(date);
+        date = ChangeFromat(date);
         console.log("DB date : "+date)
-        date = ChangeFromatToDefaultDate(date);
+        date = ChangeFromat(date);
         console.log("Default date : "+date)
 
     });
@@ -1390,14 +1399,8 @@ app.get('/getTripsFilter/:from/:to/:date_from/:date_to/:time_from/:time_to/:seat
 
 
 
-function ChangeFromatToDbDate(date){
+function ChangeFromat(date){
     var d  = date.split("-");
     var new_date = d[2]+"-"+d[1]+"-"+d[0]
     return  (new_date);
-}
-
-function ChangeFromatToDefaultDate(date){
-    var d  = date.split("-");
-    var new_date = d[2]+"-"+d[1]+"-"+d[0]
-    return (new_date);
 }

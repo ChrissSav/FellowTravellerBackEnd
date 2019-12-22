@@ -15,7 +15,8 @@ class Trip{
     this.current_num_of_bags= trip.current_num_of_bags,
     this.rate = trip.rate,
     this.state = trip.state,
-    this.creator_id = trip.creator_id
+    this.creator_id = trip.creator_id,
+    this.price = trip.price
   }
 
   setPassengers(passengers){
@@ -31,6 +32,9 @@ class Trip{
 
   setDate(date){
     this.date = date;
+  }
+  getDate(){
+    return this.date;
   }
   getCreator(){
     return this.creator;
