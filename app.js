@@ -953,11 +953,11 @@ async function RegisterUserToTrip(user_id,target_id,trip_id){
         let register_status = await RegisterRequest(user_id,trip_id);
         
         if (register_status==1){
-            console.log("register_status : "+register_status)
+          //  console.log("register_status : "+register_status)
             //send notifcation  makis
             let notification_status = await RegisterNotification(target_id,user_id,trip_id);
             if (notification_status){
-                console.log("notification_status true ")
+              //  console.log("notification_status true ")
                 return true;
             }else{
                 return false;
@@ -1283,9 +1283,10 @@ function getUserById(id){
 
 
 app.get('/getTripsFilter/:from/:to/:date_from/:date_to/:time_from/:time_to/:seats_min/:seats_max/:bags_min/:bags_max/' +
-':rate_min/:rate_max/:price_min/:price_max',async  (req ,res) => {
+':rate_min/:rate_max/:price_min/:price_max/:id',async  (req ,res) => {
 
         var list = [];
+        let id = req.params.id;
         list.push(req.params.from);
         list.push(req.params.to);
         list.push(req.params.date_from);
@@ -1311,67 +1312,67 @@ app.get('/getTripsFilter/:from/:to/:date_from/:date_to/:time_from/:time_to/:seat
                   break;
                 case 1:
                     if(list[i]!=0){
-                        list2.push("tto like '%"+list[i]+"%'");
+                        list2.push("+tto like '%"+list[i]+"%'");
                     }
                     break;
                 case 2:
                     if(list[i]!=0){
-                        list2.push("date >= '"+ChangeFromat(list[i])+"'");
+                        list2.push("+date >= '"+ChangeFromat(list[i])+"'");
                     }
                     break;
                 case 3:
                     if(list[i]!=0){
-                        list2.push("date <= '"+ChangeFromat(list[i])+"'");
+                        list2.push("+date <= '"+ChangeFromat(list[i])+"'");
                     }
                     break;
                 case 4:
                     if(list[i]!=0){
-                        list2.push("time >=  '"+list[i]+"'");
+                        list2.push("+time >=  '"+list[i]+"'");
                     }
                     break;
                 case 5:
                     if(list[i]!=0){
-                        list2.push("time <= '"+list[i]+"'");
+                        list2.push("+time <= '"+list[i]+"'");
                     }
                     break;
                 case 6:
                     if(list[i]!=0){
-                        list2.push("current_num_of_seats >= "+list[i]);
+                        list2.push("+current_num_of_seats >= "+list[i]);
                     }
                     break;
                 case 7:
                     if(list[i]!=0){
-                        list2.push("current_num_of_seats <= "+list[i]);
+                        list2.push("+current_num_of_seats <= "+list[i]);
                     }
                     break;
                 case 8:
                     if(list[i]!=0){
-                        list2.push("current_num_of_bags >= "+list[i]);
+                        list2.push("+current_num_of_bags >= "+list[i]);
                     }
                     break;
                 case 9:
                     if(list[i]!=0){
-                        list2.push("current_num_of_bags <= "+list[i]);
+                        list2.push("+current_num_of_bags <= "+list[i]);
                     }
                     break;
                 case 10:
                     if(list[i]!=0){
-                        list2.push("rate >= "+list[i]);
+                        list2.push("+rate >= "+list[i]);
                     }
                     break;
                 case 11:
                     if(list[i]!=0){
-                        list2.push("rate <= "+list[i]);
+                        list2.push("+rate <= "+list[i]);
                     }
                     break;
                 case 12:
                     if(list[i]!=0 ){
-                        list2.push("price >= "+list[i]);
+                        list2.push("+price >= "+list[i]);
                     }
                     break;
                 case 13:
                     if(list[i]!=0){
-                        list2.push("price <= "+list[i]);
+                        list2.push("+price <= "+list[i]);
                     }
                     break;
                 default:
@@ -1379,9 +1380,10 @@ app.get('/getTripsFilter/:from/:to/:date_from/:date_to/:time_from/:time_to/:seat
               }
         }
         var  m =  list2.toString();
-        m = m.split(",").join(" and ");
-        //console.log(m)
-        let l = await getTripByfilter(m);
+        console.log(m)
+        m = m.split(",+").join(" and ");
+        console.log(m)
+        let l = await getTripByfilter(m,id);
         if(l==0){
             res.send([]);
         }else{
@@ -1408,15 +1410,26 @@ app.get('/getTripsFilter/:from/:to/:date_from/:date_to/:time_from/:time_to/:seat
         
     });
     
-    function getTripByfilter(query){
+    function getTripByfilter(query,id){
         return new Promise((resolve,reject)=>{
             let q = "select trips.* from trips left join users_and_trips on trips.id = users_and_trips.trip_id "+
-            " where ("+query+") AND users_and_trips.trip_id is null "+
+            " where ("+query+" and trip.sate ='available') AND users_and_trips.trip_id is null ";
             " and trips.id NOT IN  (select trips.id from trips left join request"+
             "         on trips.id = request.trip_id where request.trip_id = request.trip_id );";
+            let q1 = "select trips.* from trips  join request on "+
+                        "trips.id = request.trip_id "+
+                        " where ("+query+" and trips.state ='available') AND request.creator_id != "+id+"";
+
+            let q2 = "select trips.*  from trips   "+
+                        "where  (("+query+") and trips.state ='available') AND trips.id NOT IN"+
+                        " (select request.trip_id "+
+                             "from request "+
+                                " where request.creator_id = "+id+") ";
+            
             //let q = "select * from trips where ffrom = "+from+" and tto =  "+to;
+            //console.log(q2)
             //db.query("select * from trips where ffrom = ? and tto = ? ",[from,to],(err, result) => {
-            db.query(q,(err, result) => {
+            db.query(q2,(err, result) => {
                 if (err || result == 0){
                     resolve (0);
                 }
