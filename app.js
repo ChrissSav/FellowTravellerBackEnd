@@ -1421,7 +1421,7 @@ app.get('/getTripsFilter/:from/:to/:date_from/:date_to/:time_from/:time_to/:seat
                         " where ("+query+" and trips.state ='available') AND request.creator_id != "+id+"";
 
             let q2 = "select trips.*  from trips   "+
-                        "where  (("+query+") and trips.state ='available') AND trips.id NOT IN"+
+                        "where trips.creator_id !="+id+" and (("+query+") and trips.state ='available') AND trips.id NOT IN"+
                         " (select request.trip_id "+
                              "from request "+
                                 " where request.creator_id = "+id+") ";
