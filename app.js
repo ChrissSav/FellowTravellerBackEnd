@@ -247,7 +247,9 @@ app.get('/registeruser/:name/:birthday/:email/:password/:phone', async (req, res
             res.send(error_handling("yparxei xristi me auto to email"));
         }
         else if (await RegisterUser(name,birthday,email,password,phone)){
-            res.send(success_handling(await getUserid(email)));
+            var id = await getUserid(email);
+            console.log(id);
+            res.send(success_handling(id));
         }else{
             res.send(error_handling("υπαρχει ηδη λογαριασμος με αυτο το μαιλ"));
         }
@@ -256,15 +258,26 @@ app.get('/registeruser/:name/:birthday/:email/:password/:phone', async (req, res
     }
 });
 
+
+app.get('/id/:id', async (req, res) => { 
+    let id = req.params.id;
+    var ress = 5644;
+    ress = await getUserid(id)
+
+    res.send(success_handling(ress))
+})
+
+
 function getUserid(email){
     return new Promise((resolve,reject)=>{
-        db.query("select id drom users where email= ?", 
+        db.query("select id from users where email= ?", 
         [email],(err, result) => {
             if (err){
+                console.log(err)
                 resolve(0);
             }
 		    else{
-                resolve(result.id);
+                resolve(result[0].id);
             }
         })
     });
@@ -410,6 +423,7 @@ app.get('/trips/:from/:to/:date/:time/:creator_id/:description/:max_seats/:max_b
     let max_seats = req.params.max_seats;
     let max_bags = req.params.max_bags;
     let price = req.params.price;
+    console.log("creator_id "+creator_id)
     //console.log("to = "+to+"  legth = "+to.length);
 
    /* if(from===" "){
