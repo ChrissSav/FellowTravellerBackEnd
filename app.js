@@ -557,7 +557,7 @@ async function AddUserToTrip(user_id,trip_id,res){
 app.get('/tripnum/:id',async  (req ,res) => {
    
     let l = await getTripCurrentNumOfPassenger(req.params.id);
-    console.log(l);
+    //console.log(l);
     res.send(success_handling(l+""));
 });
 function getTripCurrentNumOfPassenger(trip_id){
@@ -921,9 +921,7 @@ app.get('/registerrequesttotrip/:user_id/:target_id/:trip_id',async  (req ,res) 
     var trip_id = req.params.trip_id;
     var target_id = req.params.target_id;
 
-    console.log("Mpika \n"+user_id,target_id,trip_id)
     let flag = await RegisterUserToTrip(user_id,target_id,trip_id);
-    console.log("flag : "+flag)
     if (flag){
         res.send(success_handling("success"));
     }
@@ -1367,7 +1365,7 @@ app.get('/getTripsFilter/:from/:to/:date_from/:date_to/:time_from/:time_to/:seat
                     }
                     break;
                 case 12:
-                    if(list[i]!=0){
+                    if(list[i]!=0 ){
                         list2.push("price >= "+list[i]);
                     }
                     break;
@@ -1382,11 +1380,11 @@ app.get('/getTripsFilter/:from/:to/:date_from/:date_to/:time_from/:time_to/:seat
         }
         var  m =  list2.toString();
         m = m.split(",").join(" and ");
+        //console.log(m)
         let l = await getTripByfilter(m);
         if(l==0){
             res.send([]);
         }else{
-
             var teliko=[];
             var trips = l;
             trips = JSON.parse(JSON.stringify(trips));
