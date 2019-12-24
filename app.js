@@ -157,7 +157,7 @@ app.get('/users', (req,res) => {
     });
 }
 
-function getUserById(id){
+/*function getUserById(id){
     return new Promise((resolve,reject)=>{
         db.query('Select * from users where id = ?',[id],(error,result) => {
             if(result.length > 0){
@@ -172,7 +172,7 @@ function getUserById(id){
             }
         })
     });
-}
+}*/
 
  app.get('/users/:id',async (req,res) => {
     /*db.query('Select * from users where email = ?',[req.params.id],(error,result) => {
@@ -607,6 +607,49 @@ async function IncreaseCurrentNumPassengersOFTrip(trip_id){
         })
     });
 }
+
+app.get('/bags/:id',async  (req ,res) => {
+    await IncreaseCurrentNumBagsOFTrip(req.params.id)
+    let l = await IncreaseCurrentNumBagsOFTrip(req.params.id);
+    //console.log(l);
+    res.send(success_handling(l+""));
+});
+
+async function IncreaseCurrentNumBagsOFTrip(trip_id){
+    let num = await getTripCurrentNumOfBags(trip_id)+1;
+    console.log("num ="+num);
+    return new Promise((resolve,reject)=>{
+        db.query("update trips set current_num_of_bags =? where id =?",[num,trip_id],(err, result) => {
+            if (err || result == 0){
+                console.log(err);
+                resolve (false);
+            }
+            else{
+              //  console.log(true);
+                resolve (true);
+            }
+        })
+    });
+}
+
+
+function getTripCurrentNumOfBags(trip_id){
+    let num;
+    let q = "select current_num_of_bags from trips where id ="+trip_id;
+    return new Promise((resolve,reject)=>{
+        db.query(q,(err, result) => {
+            if (err || result == 0){
+                
+                num = -1;
+                resolve(num);
+            }
+            else{
+                num = result[0].current_num_of_bags;
+                resolve(num);
+            } 
+        })
+    });
+}
 //===============================================
 
 app.get('/tripnumdincrease/:id',async  (req ,res) => {
@@ -858,12 +901,12 @@ async function getPassengersOfTrip(trip_id){
         return error_handling("current trip does't exist")
     }else{
         return new Promise((resolve,reject) => {
-            let q = "select users.id,users.name,users.rate,users.num_of_travels_offered, users.num_of_travels_takespart "+
+            let q = "select users.id,users.name,users_and_trips.bag,users.rate,users.num_of_travels_offered, users.num_of_travels_takespart "+
             "from users join users_and_trips on users.id = users_and_trips.user_id"+
             " where users_and_trips.trip_id = "+trip_id;
             db.query(q,(err, result) => {
                 if (err || result == 0){
-                   // console.log(false);
+                    console.log(err);
                     resolve ([]);
                 }
                 else{
@@ -930,12 +973,12 @@ async function getTripsOfUser(user_id){
 }
 
 
-app.get('/registerrequesttotrip/:user_id/:target_id/:trip_id',async  (req ,res) => {
+app.get('/registerrequesttotrip/:user_id/:bag/:target_id/:trip_id',async  (req ,res) => {
     var user_id = req.params.user_id;
     var trip_id = req.params.trip_id;
     var target_id = req.params.target_id;
-
-    let flag = await RegisterUserToTrip(user_id,target_id,trip_id);
+    var bag = req.params.bag;
+    let flag = await RegisterUserToTrip(user_id,bag,target_id,trip_id);
     if (flag){
         res.send(success_handling("success"));
     }
@@ -944,12 +987,12 @@ app.get('/registerrequesttotrip/:user_id/:target_id/:trip_id',async  (req ,res) 
     }
 });
 
-function RegisterPassengerToTrip(user_id,trip_id){
+function RegisterPassengerToTrip(user_id,bag,trip_id){
    return new Promise((resolve,reject) => {
-        let q = "insert into users_and_trips (user_id,trip_id) VALUES ("+user_id+","+trip_id+" )";
-        db.query(q,(err, result) => {
+        let q = "insert into users_and_trips (user_id,bag,trip_id) VALUES (?,?,?)";
+        db.query(q,[user_id,bag,trip_id],(err, result) => {
             if (err || result == 0){
-               // console.log(false);
+                console.log(err);
                 resolve (false);
             }
             else{
@@ -961,10 +1004,10 @@ function RegisterPassengerToTrip(user_id,trip_id){
 }
 
 //Register to Trip
-async function RegisterUserToTrip(user_id,target_id,trip_id){
+async function RegisterUserToTrip(user_id,bag,target_id,trip_id){
     // register requst
     try{
-        let register_status = await RegisterRequest(user_id,trip_id);
+        let register_status = await RegisterRequest(user_id,bag,trip_id);
         
         if (register_status==1){
           //  console.log("register_status : "+register_status)
@@ -1069,11 +1112,11 @@ app.get('/registerrequest/:creator_id/:trip_id',async  (req ,res) => {
         res.send(error_handling("error"));
     }
 });
-function RegisterRequest(creator_id,target_id){
+function RegisterRequest(creator_id,bag,trip_id){
     
-    console.log("RegisterRequest "+"cr: "+ creator_id+" targ : "+target_id)
+   // console.log("RegisterRequest "+"cr: "+ creator_id+" targ : "+target_id)
     return new Promise((resolve,reject)=>{
-        db.query("insert into request (creator_id,trip_id) VALUES (?,?) ",[creator_id,target_id],(err, result) => {
+        db.query("insert into request (creator_id,bag,trip_id) VALUES (?,?,?) ",[creator_id,bag,trip_id],(err, result) => {
             if (err || result == 0){
                 console.log(err)
                 resolve (-1);
@@ -1089,26 +1132,51 @@ async function RegRequestTotrip(){
 
 }
 
-app.get('/changerequeststatus/:user_id/:trip_id/:status',async  (req ,res) => {
+app.get('/changerequeststatus/:user_id/:bag/:trip_id/:status',async  (req ,res) => {
     let st = req.params.status;
     let trip_id = req.params.trip_id;
     let user_id = req.params.user_id;
+    let bag = req.params.bag;
+    console.log("bags= "+bag)
     let status = await ChangeRequestStatus(user_id,trip_id,st);
     if (status == 1){
         if(st=="accept"){
             //takis
-            if (await RegisterPassengerToTrip(user_id,trip_id)){
-                 if(await IncreaseCurrentNumPassengersOFTrip(trip_id))
-                    res.send(success_handling("success"));
-                else
-                    res.send(error_handling("error"));
+            if (await RegisterPassengerToTrip(user_id,bag,trip_id)){
+                console.log("RegisterPassengerToTrip ")
+
+                 if(await IncreaseCurrentNumPassengersOFTrip(trip_id)){
+                    console.log("IncreaseCurrentNumPassengersOFTrip ")
+
+                     if(bag=="yes"){
+                        console.log("bag=='yes' ")
+
+                         if(await IncreaseCurrentNumBagsOFTrip(trip_id)){
+                           // res.send(success_handling("success"));
+                            console.log("IncreaseCurrentNumBagsOFTrip")
+                         }else{
+                            //res.send(error_handling("error"));
+                         }
+                     }else{
+                       // res.send(error_handling("error"));
+                     }
+                 }else{
+                    //res.send(success_handling("error"));
+                 }
             }else{
-                res.send(error_handling("error"));
+                //res.send(error_handling("error"));
             }
+        }else{
+            //res.send(error_handling("error"));
         }
     }else{
-        res.send(error_handling("error"));
-    }
+        //res.send(error_handling("error"));
+    }              
+                         
+    res.send(success_handling("success"));              
+                 
+               
+        
 });
 function ChangeRequestStatus(user_id,trip_id,status){
     return new Promise((resolve,reject)=>{
@@ -1140,7 +1208,7 @@ app.get('/getrequest/:trip_id',async  (req ,res) => {
 
 function GetRequestOfTrip(id){
     return new Promise((resolve,reject)=>{
-        let q = "select users.id,users.name,users.rate,users.num_of_travels_offered, users.num_of_travels_takespart from users join request"+
+        let q = "select users.id,users.name,request.bag,users.rate,users.num_of_travels_offered, users.num_of_travels_takespart from users join request"+
             " on users.id = request.creator_id where  request.status = 'stand_by' and request.trip_id = "+id;
         db.query(q,(err, result) => {
             if (err || result == 0){
@@ -1212,7 +1280,7 @@ app.get('/getnotification/:target_id',async  (req ,res) => {
     var id = req.params.target_id;
     let l = await GetNotificationOfUser(id);
     if (l==0){
-        res.send(error_handling(""));
+        res.send([]);
     }
     else{
         var teliko=[];
@@ -1221,8 +1289,8 @@ app.get('/getnotification/:target_id',async  (req ,res) => {
          for (var i = 0; i<notification.length; i++) {
             var currentNotification = new class_notification(notification[i]);
             var current_trip = await getTripN(notification[i].trip_id);
-            var user = await getUserById(notification[i].user_id)
-            currentNotification.setUser(user[0])
+            var user = await getUserById(notification[i].user_id,notification[i].trip_id);
+            currentNotification.setUser(user)
             current_trip = new class_trip(current_trip[0])
             var date = current_trip.getDate();
             date = ChangeFromat(date);
@@ -1266,7 +1334,7 @@ function GetNotificationOfUser(id){
     return new Promise((resolve,reject)=>{
         db.query("select * from notification where target_id = ? and status='true'",
         [id],(err, result) => {
-            
+            console.log(err)
             if (err || result == 0){
                 resolve (0);
             }
@@ -1277,18 +1345,21 @@ function GetNotificationOfUser(id){
     });
 }
 
-function getUserById(id){
+function getUserById(id,trip_id){
     return new Promise((resolve,reject)=>{
-        db.query('Select id,name,rate,num_of_travels_offered,num_of_travels_takespart from users where id = ?',[id],(error,result) => {
-            if(result.length > 0){
+        let q = "select users.id,name,rate,bag,num_of_travels_offered,num_of_travels_takespart from users join request on users.id=request.creator_id"
+        +" where users.id = "+id+" and request.trip_id = "+trip_id;
+        db.query(q,(err,result) => {
+            if(err || result == 0){
                 //let data = JSON.parse(result[0]);
               //  let data = JSON.parse(JSON.stringify(result[0]));
               //  console.log(data); 
-                resolve(result);
+              console.log(err)
+                
             }
             else{
               //  console.log(error_handling("There is no user with these elements"));
-                resolve("There is no user with these elements");
+                resolve(result[0]);
             }
         })
     });
