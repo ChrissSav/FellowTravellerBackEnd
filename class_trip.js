@@ -7,7 +7,7 @@ class Trip{
     this.time =trip.time,
     this.creator={},
     this.passengers = [],
-    this.requests = trip.requests,
+    this.requests = [],
     this.description= trip.description,
     this.max_seats= trip.max_seats,
     this.current_num_of_seats= trip.current_num_of_seats,

@@ -1245,26 +1245,39 @@ app.get('/getnotification/:target_id',async  (req ,res) => {
         notification = JSON.parse(JSON.stringify(notification));
          for (var i = 0; i<notification.length; i++) {
             var currentNotification = new class_notification(notification[i]);
+            
             var current_trip = await getTripN(notification[i].trip_id);
+            current_trip = new class_trip(current_trip[0])
+            //Προσθεση παραληπτη
             var user = await getUserById(notification[i].user_id,notification[i].trip_id);
             currentNotification.setUser(user)
-            current_trip = new class_trip(current_trip[0])
+            console.log(currentNotification.type=="request")
+            //Αλλαγη της μορφης της ημερ/νιας
             var date = current_trip.getDate();
             date = ChangeFromat(date);
             current_trip.setDate(date);
+            //Προσθηκη δημιουργου του ταξιδιου
             var creator = await getTripCreator(notification[i].trip_id);
             creator = JSON.parse(JSON.stringify(creator[0]));
-            var passengers = await getPassengersOfTrip(notification[i].trip_id);
-            passengers = JSON.parse(JSON.stringify(passengers));
-            current_trip.setPassengers(passengers);
             current_trip.setCreator(creator);
-            var requests = await GetRequestOfTrip(notification[i].trip_id);
-            requests = JSON.parse(JSON.stringify(requests));
-            if(requests==0){
-                requests=[];
-            }        
-            current_trip.setRequests(requests);
+            //Προσθηκη επιβατων
+            if(currentNotification.type=="request" || currentNotification.type=="accept"){
+                var passengers = await getPassengersOfTrip(notification[i].trip_id);
+                passengers = JSON.parse(JSON.stringify(passengers));
+                current_trip.setPassengers(passengers);
+            }
+            //Προσθηκη αιτηματων
+            if(currentNotification.type=="request"){
+                var requests = await GetRequestOfTrip(notification[i].trip_id);
+                requests = JSON.parse(JSON.stringify(requests));
+                if(requests==0){
+                    requests=[];
+                }        
+                current_trip.setRequests(requests);
+            }
+            //Λοιπα
             delete current_trip.creator_id;
+            //Τοποθετηση στην λιστα ειδοποιησεων
             currentNotification.setTrip(current_trip)
             teliko.push(currentNotification);
         }
