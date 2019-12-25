@@ -840,7 +840,9 @@ function getTripCreator(trip_id){
          "on users.id = trips.creator_id"+
          " where trips.id="+trip_id;
          db.query(q,(err, result) => {
-             if (err || result == 0){
+             if (err){
+                 console.log("getTripCreator");
+                 console.log(err)
                 resolve (err);
              }
              else{
@@ -983,7 +985,7 @@ async function RegisterUserToTrip(user_id,bag,target_id,trip_id){
         if (register_status==1){
           //  console.log("register_status : "+register_status)
             //send notifcation  makis
-            let notification_status = await RegisterNotification(target_id,user_id,trip_id);
+            let notification_status = await RegisterNotification(target_id,user_id,trip_id,"request");
             if (notification_status){
               //  console.log("notification_status true ")
                 return true;
@@ -996,6 +998,10 @@ async function RegisterUserToTrip(user_id,bag,target_id,trip_id){
         console.log("error catch : "+register_status)
     }
 }
+
+
+
+
 //==================Rating=====================
 app.get('/rate/:user_id/:target_id/:num_of_stars/:type',async (req ,res) => {
     
@@ -1085,9 +1091,7 @@ function RegisterRequest(creator_id,bag,trip_id){
     });
 }
 
-async function RegRequestTotrip(){
 
-}
 
 app.get('/changerequeststatus/:user_id/:bag/:trip_id/:status',async  (req ,res) => {
     let st = req.params.status;
@@ -1098,43 +1102,109 @@ app.get('/changerequeststatus/:user_id/:bag/:trip_id/:status',async  (req ,res) 
     let status = await ChangeRequestStatus(user_id,trip_id,st);
     if (status == 1){
         if(st=="accept"){
-            //takis
-            if (await RegisterPassengerToTrip(user_id,bag,trip_id)){
-                console.log("RegisterPassengerToTrip ")
-
-                 if(await IncreaseCurrentNumPassengersOFTrip(trip_id)){
-                    console.log("IncreaseCurrentNumPassengersOFTrip ")
-
-                     if(bag=="yes"){
-                        console.log("bag=='yes' ")
-
-                         if(await IncreaseCurrentNumBagsOFTrip(trip_id)){
-                           // res.send(success_handling("success"));
-                            console.log("IncreaseCurrentNumBagsOFTrip")
-                         }else{
-                            //res.send(error_handling("error"));
-                         }
-                     }else{
-                       // res.send(error_handling("error"));
-                     }
-                 }else{
-                    //res.send(success_handling("error"));
-                 }
+            var numOfSeats = getTripCurrentNumOfPassenger();
+            var numOfBags = getTripCurrentNumOfBags();
+            var flag = await RegisterToTripSafe(user_id,bag,trip_id);
+            if(flag==0){
+                var target_id = await getTripCreator(trip_id);
+                target_id = JSON.parse(JSON.stringify(target_id[0]))
+                target_id = target_id.id;
+                if (await RegisterNotification(target_id,user_id,trip_id,"accept")){
+                    res.send(success_handling("success")); 
+                }else{
+                    res.send(error_handling("error"));
+                }
             }else{
-                //res.send(error_handling("error"));
-            }
+                await RollBack(flag,user_id,trip_id,numOfSeats,numOfBags);
+                res.send(error_handling("error"));
+            }  
         }else{
-            //res.send(error_handling("error"));
+            //reject
+            var target_id = await getTripCreator(trip_id);
+            target_id = JSON.parse(JSON.stringify(target_id[0]))
+            target_id = target_id.id;
+            if (await RegisterNotification(target_id,user_id,trip_id,"reject")){
+                res.send(success_handling("success")); 
+            }else{
+                res.send(error_handling("error"));
+            }
         }
     }else{
-        //res.send(error_handling("error"));
-    }              
-                         
-    res.send(success_handling("success"));              
-                 
-               
-        
+        res.send(error_handling("error"));
+    }                                      
+                      
 });
+app.get('/uom/:trip_id',async  (req ,res) => {
+    var id = req.params.trip_id;
+    let l = await getTripCreator(id);
+    if (l==0){
+        res.send([]);
+    }
+    else{
+        l = JSON.parse(JSON.stringify(l[0]))
+        l = l.id
+        res.send(success_handling(l+""));
+    }
+});
+async function RegisterToTripSafe(user_id,bag,trip_id){   
+    if (!await RegisterPassengerToTrip(user_id,bag,trip_id)){
+        return 1;
+    }if(!await IncreaseCurrentNumPassengersOFTrip(trip_id)){
+        return 2;
+    }
+    if(bag=="yes"){
+        if(!await IncreaseCurrentNumBagsOFTrip(trip_id)){
+            return 3;
+        }
+    }
+    return 0;
+}
+
+async function RollBack(pos,user_id,trip_id,numOfSeats,numOfBags){
+    if(pos==3){
+        await RollBackNumInTrips(trip_id,numOfBags,"current_num_of_bags");
+        pos--;
+    }
+    if(pos==2){
+        await RollBackNumInTrips(trip_id,numOfSeats,"current_num_of_seats");
+        pos--;
+    }
+    if(pos==1){
+        await DeletePassengerFromTrip(trip_id,user_id);
+    }
+}
+
+function DeletePassengerFromTrip(trip_id,user_id){
+    return new Promise((resolve,reject)=>{
+        let q = "delete from users_and_trips where user_id =  "+user_id+" and trip_id = "+trip_id;
+        db.query(q,(err, result) => {
+            if (err || result == 0){
+                console.log(err)
+                resolve (false);
+            }
+            else{
+                resolve (true);
+            }
+        })
+    });
+}
+
+
+function RollBackNumInTrips(trip_id,num,colum){
+    return new Promise((resolve,reject)=>{
+        let q = "update  trips set "+colum+" = "+num+" where id = "+trip_id;
+        db.query(q,(err, result) => {
+            if (err || result == 0){
+                console.log(err)
+                resolve (false);
+            }
+            else{
+                resolve (true);
+            }
+        })
+    });
+}
+
 function ChangeRequestStatus(user_id,trip_id,status){
     return new Promise((resolve,reject)=>{
         db.query("update  request set status = ? where creator_id = ? and trip_id = ?",[status,user_id,trip_id],(err, result) => {
@@ -1184,18 +1254,18 @@ function GetRequestOfTrip(id){
 //========================Notification=================
 
 //Register
-app.get('/registernotification/:target_id/:user_id/:trip_id',async  (req ,res) => {
-    let status = await RegisterNotification(req.params.target_id,req.params.user_id,req.params.trip_id);
+/*app.get('/registernotification/:target_id/:user_id/:trip_id',async  (req ,res) => {
+    let status = await RnegisterNotification(req.params.target_id,req.params.user_id,req.params.trip_id);
     if (status){
         res.send(success_handling("success"));
     }else{
         res.send(error_handling("error"));
     }
-});
-function RegisterNotification(target_id,user_id,trip_id){
+});*/
+function RegisterNotification(target_id,user_id,trip_id,type){
     return new Promise((resolve,reject)=>{
-        db.query("insert into notification (target_id,user_id,trip_id) values (?,?,?)",
-        [target_id,user_id,trip_id],(err, result) => {
+        db.query("insert into notification (target_id,user_id,trip_id,type) values (?,?,?,?)",
+        [target_id,user_id,trip_id,type],(err, result) => {
             if (err || result == 0){
                 resolve (false);
                 console.log(err)
@@ -1206,6 +1276,20 @@ function RegisterNotification(target_id,user_id,trip_id){
         })
     });
 }
+
+app.get('/registerNotification/:user_id/:target_id/:trip_id/:type',async  (req ,res) => {
+    let user_id = req.params.user_id;
+    let target_id = req.params.target_id;
+    let trip_id = req.params.trip_id;
+    let type = req.params.type;
+
+    let status = await RegisterNotification(user_id,target_id,trip_id,type);
+    if (status){
+        res.send(success_handling("success"));
+    }else{
+        res.send(error_handling("error"));
+    }
+});
 
 //ChangeStatus
 app.get('/changestatusnotification/:id',async  (req ,res) => {
@@ -1221,6 +1305,8 @@ function ChangeStatusNotification(id){
         db.query("update notification set status = 'read' where id = ?",
         [id],(err, result) => {
             if (err || result == 0){
+                console.log("ChangeStatusNotification");
+                console.log("err");
                 resolve (false);
             }
             else{
@@ -1243,24 +1329,33 @@ app.get('/getnotification/:target_id',async  (req ,res) => {
         var teliko=[];
         var notification = l;
         notification = JSON.parse(JSON.stringify(notification));
+        
          for (var i = 0; i<notification.length; i++) {
             var currentNotification = new class_notification(notification[i]);
-            
             var current_trip = await getTripN(notification[i].trip_id);
             current_trip = new class_trip(current_trip[0])
+            console.log("Προσθεση παραληπτη")
             //Προσθεση παραληπτη
-            var user = await getUserById(notification[i].user_id,notification[i].trip_id);
-            currentNotification.setUser(user)
-            console.log(currentNotification.type=="request")
+            if(notification[i].type=="rate"){
+                var user = await getUserByIdSecond(notification[i].user_id);
+                currentNotification.setUser(user)
+            }
+            else{
+                var user = await getUserById(notification[i].user_id,notification[i].trip_id);
+                currentNotification.setUser(user)
+            }
             //Αλλαγη της μορφης της ημερ/νιας
+            console.log("Αλλαγη της μορφης της ημερ/νιας")
             var date = current_trip.getDate();
             date = ChangeFromat(date);
             current_trip.setDate(date);
             //Προσθηκη δημιουργου του ταξιδιου
+            console.log("Προσθηκη δημιουργου του ταξιδιου")
             var creator = await getTripCreator(notification[i].trip_id);
             creator = JSON.parse(JSON.stringify(creator[0]));
             current_trip.setCreator(creator);
             //Προσθηκη επιβατων
+            console.log("Προσθηκη επιβατων")
             if(currentNotification.type=="request" || currentNotification.type=="accept"){
                 var passengers = await getPassengersOfTrip(notification[i].trip_id);
                 passengers = JSON.parse(JSON.stringify(passengers));
@@ -1292,6 +1387,8 @@ function getTripN(trip_id){
         "rate,state,price from trips where id ="+trip_id;
         db.query(q,(err, result) => {
             if (err || result == 0){
+                console.log("getTripN")
+                console.log(err)
                 resolve (err);
             }
             else{
@@ -1324,8 +1421,27 @@ function getUserById(id,trip_id){
                 //let data = JSON.parse(result[0]);
               //  let data = JSON.parse(JSON.stringify(result[0]));
               //  console.log(data); 
-              console.log(err)
-                
+              console.log("getUserById")
+              console.log(err)               
+            }
+            else{
+              //  console.log(error_handling("There is no user with these elements"));
+                resolve(result[0]);
+            }
+        })
+    });
+}
+function getUserByIdSecond(id){
+    return new Promise((resolve,reject)=>{
+        let q = "select id,name,rate,num_of_travels_offered,num_of_travels_takespart from users"
+        +" where users.id = "+id;
+        db.query(q,(err,result) => {
+            if(err || result == 0){
+                //let data = JSON.parse(result[0]);
+              //  let data = JSON.parse(JSON.stringify(result[0]));
+              //  console.log(data); 
+              console.log("getUserById")
+              console.log(err)               
             }
             else{
               //  console.log(error_handling("There is no user with these elements"));
