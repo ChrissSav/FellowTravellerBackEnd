@@ -4,6 +4,7 @@ let error_handling = require('./error_handling');
 let success_handling = require('./success_handling');
 let class_trip = require('./class_trip');
 let class_notification = require('./class_notification');
+var sleep = require('system-sleep');
 
 
 const db = mysql.createConnection({
@@ -499,36 +500,6 @@ function registerTrip(from,to,date,time,creator_id,description,max_seats,max_bag
 
 
 
-//==================Rating=====================
-app.get('/trips/:user_id/:target_id/:num_of_stars/:type', (req ,res) => {
-    let user_id = req.params.user_id;
-    let target_id = req.params.target_id;
-    let num_of_stars = req.params.num_of_stars;
-    let type = req.params.type;
-
-    if(user_id===" " || user_id===""){
-        res.send(error_handling("keno user_id"));
-    }
-    else if(!isNaN(user_id)){
-        res.send(error_handling("to user_id den einai arithmos"));
-    }
-    else if(target_id===" " || target_id===""){
-        res.send(error_handling("keno target_id "));
-    }
-    else if(!isNaN(target_id)){
-        res.send(error_handling("To target_id den einai arithmos"));
-    }
-    else if(num_of_stars==="" || num_of_stars===" "){
-        res.send(error_handling("keno pedio num_of_stars"));
-    }
-    else if(type==="" || type===" "){
-        res.send(error_handling("keno pedio type"));
-    }
-    else{
-        registerRate(user_id,target_id,num_of_stars,type,res);
-       // res.send(user_id+"  "+target_id+"  "+num_of_stars+"  "+type);
-    }
-});
 
 
 
@@ -1084,21 +1055,7 @@ app.get('/rate/:user_id/:target_id/:num_of_stars/:type',async (req ,res) => {
 
 
 
-//Rates
 
-function registerRate(user_id,target_id,num_of_stars,type,res){
-    db.query("INSERT INTO ratings (user_id, target_id, num_of_stars,type) VALUES (?,?,?,?)", 
-        [user_id, target_id,num_of_stars,type],(err, result) => {
-            if (err || result == 0){
-                res.send(error_handling("error"));
-            }
-		    else{
-                res.send(success_handling("succes rating"));
-            }
-    });
-}
-
-//request
 
 
 app.get('/registerrequest/:creator_id/:trip_id',async  (req ,res) => {
@@ -1334,7 +1291,7 @@ function GetNotificationOfUser(id){
     return new Promise((resolve,reject)=>{
         db.query("select * from notification where target_id = ? and status='true'",
         [id],(err, result) => {
-            console.log(err)
+           // console.log(err)
             if (err || result == 0){
                 resolve (0);
             }
@@ -1530,4 +1487,44 @@ function ChangeFromat(date){
     var d  = date.split("-");
     var new_date = d[2]+"-"+d[1]+"-"+d[0]
     return  (new_date);
+}
+
+
+
+
+
+
+//==================RAtes=====================
+app.get('/registerRate/:user_id/:target_id/:friendly/:reliable/:careful/:consistent/:description', async (req ,res) => {
+    let user_id = req.params.user_id;
+    let target_id = req.params.target_id;
+    let friendly = req.params.friendly;
+    let reliable = req.params.reliable;
+    let careful = req.params.careful;
+    let consistent = req.params.consistent;
+
+    let description = req.params.description;
+    let status = await registerRate(user_id,target_id,friendly,reliable,careful,consistent,description);
+    if (status){
+        res.send(success_handling("mpompa"));
+    }else{
+        res.send(error_handling("error"));
+    }
+});
+
+
+function registerRate(user_id,target_id,friendly,reliable,careful,consistent,description){
+    return new Promise((resolve,reject)=>{
+        let q  = "insert into rates (user_id,target_id,friendly,reliable,careful,consistent,description) VALUES "+
+        "(?,?,?,?,?,?,?)" ;
+        db.query(q,[user_id,target_id,friendly,reliable,careful,consistent,description],(err, result) => {
+            if (err || result == 0){
+                resolve (false);
+            }
+
+            else{
+                resolve (true);
+            }
+        })
+    });
 }
