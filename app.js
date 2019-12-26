@@ -5,7 +5,7 @@ let success_handling = require('./success_handling');
 let class_trip = require('./class_trip');
 let class_notification = require('./class_notification');
 let class_userinfo = require('./class_userinfo');
-
+let class_rateItem = require('./class_rateItem');
 var sleep = require('system-sleep');
 
 
@@ -1849,10 +1849,17 @@ app.get('/GetUsersRateAnother/:target_id', async (req, res) => {
     var allUsers = await GetUsersRateAnother(target_id);
     allUsers = JSON.parse(JSON.stringify(allUsers)); 
     for(var i=0; i<allUsers.length; i++){
-        teliko.push({
-            user : allUsers[i],
-            rate : await GetRatesOfUserToAnother(target_id,allUsers[i].id)
-        });
+        var rate = new class_rateItem()
+        rate.setUser(allUsers[i]);
+        let temp = await GetRatesOfUserToAnother(target_id,allUsers[i].id);
+        temp = JSON.parse(JSON.stringify(temp)); 
+       // console.log(temp)
+        rate.setRate(temp.sumrate);
+        rate.setDate(ChangeFromat(temp.date))
+        rate.setDescription(temp.description);
+        
+
+        teliko.push(rate);
     }
     res.send(teliko);
 })
@@ -1878,7 +1885,7 @@ function GetUsersRateAnother(target_id){
 
 function GetRatesOfUserToAnother(target_id,user_id){
     return new Promise((resolve,reject)=>{
-        let q =  "SELECT (sum(friendly+reliable+careful+consistent)/4)/count(friendly+reliable+careful+consistent) as sumrate"
+        let q =  "SELECT (sum(friendly+reliable+careful+consistent)/4)/count(friendly+reliable+careful+consistent) as sumrate,date,description"
         +" from rates where target_id = "+target_id+ " and user_id = "+user_id;
         //console.log(q)
         db.query(q,(err, result) => {
@@ -1888,7 +1895,7 @@ function GetRatesOfUserToAnother(target_id,user_id){
                 resolve ({});
             }
             else{
-                resolve (result[0].sumrate);
+                resolve (result[0]);
             }
         })
     });
