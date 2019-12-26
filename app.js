@@ -4,6 +4,8 @@ let error_handling = require('./error_handling');
 let success_handling = require('./success_handling');
 let class_trip = require('./class_trip');
 let class_notification = require('./class_notification');
+let class_userinfo = require('./class_userinfo');
+
 var sleep = require('system-sleep');
 
 
@@ -326,14 +328,14 @@ async function UpdateUserRateFromUsersTable(id,num){
         return false;
     }
 }
-app.get('/makiss/:id/:num', async (req, res) => { 
+/*app.get('/makiss/:id/:num', async (req, res) => { 
     
     let id = req.params.id;
     let num = req.params.num;
     ress = await UpdateUserRateFromUsersTable(id,num)
 
     res.send(success_handling(ress+""))
-})
+})*/
 
 
 function getUserid(email){
@@ -1703,24 +1705,90 @@ app.get('/registerRate/:user_id/:target_id/:friendly/:reliable/:careful/:consist
     let description = req.params.description;
     let status = await registerRate(user_id,target_id,friendly,reliable,careful,consistent,description);
     if (status){
+        var sum = (parseInt(friendly)+parseInt(reliable)+parseInt(careful)+parseInt(consistent))/4;
+        console.log("registerRate")
+        console.log("sum1 : "+sum+"\n \n")
+        await UpdateUserRateFromUsersTable(target_id,sum);
         res.send(success_handling("mpompa"));
     }else{
         res.send(error_handling("error"));
     }
 });
 
-
 function registerRate(user_id,target_id,friendly,reliable,careful,consistent,description){
+
     return new Promise((resolve,reject)=>{
-        let q  = "insert into rates (user_id,target_id,friendly,reliable,careful,consistent,description) VALUES "+
-        "(?,?,?,?,?,?,?)" ;
-        db.query(q,[user_id,target_id,friendly,reliable,careful,consistent,description],(err, result) => {
+        var today = new Date();
+        var dd = String(today.getDate()).padStart(2, '0');
+        var mm = String(today.getMonth() + 1).padStart(2, '0'); //January is 0!
+        var yyyy = today.getFullYear();
+
+        today = yyyy + '-' + mm + '-' + dd;
+        let q  = "insert into rates (user_id,target_id,friendly,reliable,careful,consistent,description,date) VALUES "+
+        "(?,?,?,?,?,?,?,?)" ;
+        db.query(q,[user_id,target_id,friendly,reliable,careful,consistent,description,today],(err, result) => {
             if (err || result == 0){
                 resolve (false);
             }
 
             else{
                 resolve (true);
+            }
+        })
+    });
+}
+
+
+function GetUserAllRatesFromRates(id){
+    return new Promise((resolve,reject)=>{
+        let q = "select friendly,reliable,careful,consistent,date from rates where target_id = "+id;
+        db.query(q,(err, result) => {
+            if (err){
+                console.log("GetUserAllRatesFromRates")
+                console.log(err)
+                resolve ([]);
+            }
+
+            else{
+                resolve (result);
+            }
+        })
+    });
+}
+
+
+app.get('/getUserInfo/:id', async (req, res) => { 
+    
+    //var teliko = [];
+    let id = req.params.id;
+    ress = await getUserByIdSecond(id);
+    
+    var User = new class_userinfo();
+    let userinfo = JSON.parse(JSON.stringify(ress));
+    User.setUser(userinfo)
+    
+    ress = await GetAvrgUsersRate(id);
+    User.setRate(ress);
+   // User.getRate().date = ChangeFromat(User.getRate().date);
+   // console.log(ress)
+    ///teliko.push(User)
+    res.send(User)
+})
+
+
+
+function GetAvrgUsersRate(id){
+return new Promise((resolve,reject)=>{
+        let q = "SELECT AVG(friendly) as friendly , AVG(reliable) as reliable, AVG(careful) as careful"
+        +" FROM rates where target_id = "+id;
+        db.query(q,(err, result) => {
+            if (err){
+                console.log("GetUserAllRatesFromRates")
+                console.log(err)
+                resolve ([]);
+            }
+            else{
+                resolve (result);
             }
         })
     });
