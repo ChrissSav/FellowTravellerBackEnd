@@ -1491,7 +1491,7 @@ function getUserById(id,trip_id){
         let q = "select users.id,name,rate,bag,num_of_travels_offered,num_of_travels_takespart from users join request on users.id=request.creator_id"
         +" where users.id = "+id+" and request.trip_id = "+trip_id;
         db.query(q,(err,result) => {
-            if(err || result == 0){
+            if(err){
                 //let data = JSON.parse(result[0]);
               //  let data = JSON.parse(JSON.stringify(result[0]));
               //  console.log(data); 
@@ -1771,20 +1771,20 @@ app.get('/getUserInfo/:id', async (req, res) => {
     
     ress = await GetAvrgUsersRate(id);
     ress = JSON.parse(JSON.stringify(ress))
-    if(ress.friendly == null){
-        ress.friendly= 0;
+    if(ress.friendly != null){
+        User.setFriendly(Math.round(ress.friendly));
     }
-    if(ress.reliable == null){
-        ress.reliable= 0;
+    if(ress.reliable != null){
+        User.setReliable(Math.round(ress.reliable));
     }
-    if(ress.careful == null){
-        ress.careful= 0;
+    if(ress.careful != null){
+        User.setCareful(Math.round(ress.careful));
     }
-    if(ress.consistent == null){
-        ress.consistent= 0;
+    if(ress.consistent != null){
+        User.setConsistent(Math.round(ress.consistent));
     }
     //console.log(ress)
-    User.setRate(ress);
+    //User.setRate(ress);
    // User.getRate().date = ChangeFromat(User.getRate().date);
    // console.log(ress)
     ///teliko.push(User)
