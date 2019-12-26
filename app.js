@@ -197,7 +197,6 @@ app.get('/users', (req,res) => {
 });
 
 
-
 app.get('/getuserauth/:email/:pass',async (req,res) => {
     try{
         res.send(await getUserAuth(req.params.email,req.params.pass))
@@ -249,7 +248,8 @@ app.get('/registeruser/:name/:birthday/:email/:password/:phone', async (req, res
         }
         else if (await RegisterUser(name,birthday,email,password,phone)){
             var id = await getUserid(email);
-            console.log(id);
+            await CreateRateToUser(id);
+            console.log("registeruser id) :"+id);
             res.send(success_handling(id));
         }else{
             res.send(error_handling("υπαρχει ηδη λογαριασμος με αυτο το μαιλ"));
@@ -260,12 +260,79 @@ app.get('/registeruser/:name/:birthday/:email/:password/:phone', async (req, res
 });
 
 
-app.get('/id/:id', async (req, res) => { 
-    let id = req.params.id;
-    var ress = 5644;
-    ress = await getUserid(id)
+function CreateRateToUser(user_id){
+    return new Promise((resolve,reject)=>{
+        let q = "insert into rateofuser (user_id)  VALUES ("+user_id+")";
+        db.query(q,(err, result) => {
+            if (err){
+                console.log("CreateRateToUser")
+                console.log(err)
+                resolve(false);
+            }
+		    else{
+                resolve(true);
+            }
+        })
+    });
+}
 
-    res.send(success_handling(ress))
+
+function GetUserRateFromUsersTable(id){
+    return new Promise((resolve,reject)=>{
+        let q = "select rate from users where id = "+id;
+        db.query(q,(err, result) => {
+            if (err){
+                console.log("GetUserRateFromUsersTable")
+                console.log(err)
+                resolve(-1);
+            }
+		    else{
+                resolve(result[0].rate);
+            }
+        })
+    });
+}
+
+function SetUserRateFromUsersTable(id,num){
+    return new Promise((resolve,reject)=>{
+        let q = "update users set rate = "+num+" where id = "+id;
+        db.query(q,(err, result) => {
+            if (err){
+                console.log("SetUserRateFromUsersTable")
+                console.log(err)
+                resolve(false);
+            }
+		    else{
+                resolve(true);
+            }
+        })
+    });
+}
+
+async function UpdateUserRateFromUsersTable(id,num){
+    var currentrate = await GetUserRateFromUsersTable(id);
+    currentrate = parseFloat(currentrate);
+    num = parseFloat(num);
+    if (currentrate == 0)
+        currentrate=num;
+    var sum = (currentrate+num)/2;
+    console.log("currentrate : "+currentrate)
+    console.log("num : "+num)
+    console.log("sum : "+sum)
+    if(await SetUserRateFromUsersTable(id,sum)){
+        return true;
+    }
+    else{
+        return false;
+    }
+}
+app.get('/makiss/:id/:num', async (req, res) => { 
+    
+    let id = req.params.id;
+    let num = req.params.num;
+    ress = await UpdateUserRateFromUsersTable(id,num)
+
+    res.send(success_handling(ress+""))
 })
 
 
@@ -953,6 +1020,7 @@ app.get('/registerrequesttotrip/:user_id/:bag/:target_id/:trip_id',async  (req ,
     var bag = req.params.bag;
     let flag = await RegisterUserToTrip(user_id,bag,target_id,trip_id);
     if (flag){
+        
         res.send(success_handling("success"));
     }
     else{
