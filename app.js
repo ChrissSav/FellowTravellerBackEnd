@@ -250,8 +250,8 @@ app.get('/registeruser/:name/:birthday/:email/:password/:phone', async (req, res
         }
         else if (await RegisterUser(name,birthday,email,password,phone)){
             var id = await getUserid(email);
-            await CreateRateToUser(id);
-            console.log("registeruser id) :"+id);
+            //await CreateRateToUser(id);
+           // console.log("registeruser id) :"+id);
             res.send(success_handling(id));
         }else{
             res.send(error_handling("υπαρχει ηδη λογαριασμος με αυτο το μαιλ"));
@@ -264,7 +264,7 @@ app.get('/registeruser/:name/:birthday/:email/:password/:phone', async (req, res
 
 function CreateRateToUser(user_id){
     return new Promise((resolve,reject)=>{
-        let q = "insert into rateofuser (user_id)  VALUES ("+user_id+")";
+        let q = "insert into rates (user_id)  VALUES ("+user_id+")";
         db.query(q,(err, result) => {
             if (err){
                 console.log("CreateRateToUser")
@@ -277,6 +277,7 @@ function CreateRateToUser(user_id){
         })
     });
 }
+
 
 
 function GetUserRateFromUsersTable(id){
@@ -311,15 +312,18 @@ function SetUserRateFromUsersTable(id,num){
     });
 }
 
+
 async function UpdateUserRateFromUsersTable(id,num){
     var currentrate = await GetUserRateFromUsersTable(id);
     currentrate = parseFloat(currentrate);
     num = parseFloat(num);
-    if (currentrate == 0)
+    if (currentrate == 0){
+        console.log("****");
         currentrate=num;
+    }
     var sum = (currentrate+num)/2;
-    console.log("currentrate : "+currentrate)
-    console.log("num : "+num)
+    console.log("currentrate : "+ currentrate)
+    console.log("new rate  : "+num)
     console.log("sum : "+sum)
     if(await SetUserRateFromUsersTable(id,sum)){
         return true;
@@ -1706,8 +1710,6 @@ app.get('/registerRate/:user_id/:target_id/:friendly/:reliable/:careful/:consist
     let status = await registerRate(user_id,target_id,friendly,reliable,careful,consistent,description);
     if (status){
         var sum = (parseInt(friendly)+parseInt(reliable)+parseInt(careful)+parseInt(consistent))/4;
-        console.log("registerRate")
-        console.log("sum1 : "+sum+"\n \n")
         await UpdateUserRateFromUsersTable(target_id,sum);
         res.send(success_handling("mpompa"));
     }else{
@@ -1768,19 +1770,99 @@ app.get('/getUserInfo/:id', async (req, res) => {
     User.setUser(userinfo)
     
     ress = await GetAvrgUsersRate(id);
+    ress = JSON.parse(JSON.stringify(ress))
+    if(ress.friendly == null){
+        ress.friendly= 0;
+    }
+    if(ress.reliable == null){
+        ress.reliable= 0;
+    }
+    if(ress.careful == null){
+        ress.careful= 0;
+    }
+    if(ress.consistent == null){
+        ress.consistent= 0;
+    }
+    //console.log(ress)
     User.setRate(ress);
    // User.getRate().date = ChangeFromat(User.getRate().date);
    // console.log(ress)
     ///teliko.push(User)
-    res.send(User)
+    res.send(User);
 })
 
 
+app.get('/getUserAllRAtes/:target_id', async (req, res) => { 
+    
+    //var teliko = [];
+    let target_id = req.params.target_id;
+    ress = await getUserByIdSecond(target_id);
+    
+    var User = new class_userinfo();
+    let userinfo = JSON.parse(JSON.stringify(ress));
+    User.setUser(userinfo)
+    
+    ress = await GetAllRatesOfUser(target_id);
+    User.setRate(ress);
+   // User.getRate().date = ChangeFromat(User.getRate().date);
+   // console.log(ress)
+    ///teliko.push(User)
+    res.send(User);
+})
 
 function GetAvrgUsersRate(id){
-return new Promise((resolve,reject)=>{
-        let q = "SELECT AVG(friendly) as friendly , AVG(reliable) as reliable, AVG(careful) as careful"
-        +" FROM rates where target_id = "+id;
+    return new Promise((resolve,reject)=>{
+        let q = "SELECT AVG(friendly) as friendly , AVG(reliable) as reliable, AVG(careful) as careful, AVG(consistent) as consistent"
+        +" from rates where target_id = "+id;
+        db.query(q,(err, result) => {
+            if (err){
+                console.log("GetUserAllRatesFromRates")
+                console.log(err)
+                resolve ({});
+            }
+            else{
+                resolve (result[0]);
+            }
+        })
+    });
+}
+function GetAllRatesOfUser(target_id){
+    return new Promise((resolve,reject)=>{
+        let q = "SELECT (sum(friendly+reliable+careful+consistent)/4)/count(friendly+reliable+careful+consistent) as sum"
+        +" from rates where target_id = "+target_id;
+        db.query(q,(err, result) => {
+            if (err){
+                console.log("GetUserAllRatesFromRates")
+                console.log(err)
+                resolve ([]);
+            }
+            else{
+                resolve (result[0]);
+            }
+        })
+    });
+}
+app.get('/GetUsersRateAnother/:target_id', async (req, res) => { 
+
+    var teliko = [];
+    let target_id = req.params.target_id;
+    var allUsers = await GetUsersRateAnother(target_id);
+    allUsers = JSON.parse(JSON.stringify(allUsers)); 
+    for(var i=0; i<allUsers.length; i++){
+        teliko.push({
+            user : allUsers[i],
+            rate : await GetRatesOfUserToAnother(target_id,allUsers[i].id)
+        });
+    }
+    res.send(teliko);
+})
+
+
+function GetUsersRateAnother(target_id){
+    return new Promise((resolve,reject)=>{
+        let q =  "SELECT users.id,users.name,users.rate,users.num_of_travels_offered, users.num_of_travels_takespart "+
+        "from users join rates on users.id=rates.user_id "
+        +" where rates.target_id="+target_id+ " GROUP BY users.id  ";
         db.query(q,(err, result) => {
             if (err){
                 console.log("GetUserAllRatesFromRates")
@@ -1789,6 +1871,24 @@ return new Promise((resolve,reject)=>{
             }
             else{
                 resolve (result);
+            }
+        })
+    });
+}
+
+function GetRatesOfUserToAnother(target_id,user_id){
+    return new Promise((resolve,reject)=>{
+        let q =  "SELECT (sum(friendly+reliable+careful+consistent)/4)/count(friendly+reliable+careful+consistent) as sumrate"
+        +" from rates where target_id = "+target_id+ " and user_id = "+user_id;
+        //console.log(q)
+        db.query(q,(err, result) => {
+            if (err){
+                console.log("GetUserAllRatesFromRates")
+                console.log(err)
+                resolve ({});
+            }
+            else{
+                resolve (result[0].sumrate);
             }
         })
     });
