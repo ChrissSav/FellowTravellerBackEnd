@@ -118,7 +118,7 @@ public class Main {
 			//System.out.println(result);
 			ArrayList<Integer> passengers = new ArrayList<>();
 			if(result>=1){
-				//System.out.println(trip.getId()+"   set notifocation");
+				System.out.println(trip.getId()+"   set notifocation");
 				passengers = driver.GetAllPassengersOfTrip(trip.getId());
 				if(passengers.size()!=0){
 					for (int i=0; i<passengers.size(); i++){

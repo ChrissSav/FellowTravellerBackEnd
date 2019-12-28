@@ -7,6 +7,7 @@ let class_notification = require('./class_notification');
 let class_userinfo = require('./class_userinfo');
 let class_rateItem = require('./class_rateItem');
 var sleep = require('system-sleep');
+var bodyParser = require('body-parser')
 
 
 const db = mysql.createConnection({
@@ -908,7 +909,7 @@ function getTrip(trip_id){
 
 function getTripCreator(trip_id){
      return new Promise((resolve,reject)=>{
-         let q ="select users.id,users.name,users.rate,users.num_of_travels_offered, users.num_of_travels_takespart  "+
+         let q ="select users.id,users.name,users.rate,users.picture,users.num_of_travels_offered, users.num_of_travels_takespart  "+
          "from users join trips "+
          "on users.id = trips.creator_id"+
          " where trips.id="+trip_id;
@@ -947,7 +948,7 @@ async function getPassengersOfTrip(trip_id){
         return error_handling("current trip does't exist")
     }else{
         return new Promise((resolve,reject) => {
-            let q = "select users.id,users.name,users_and_trips.bag,users.rate,users.num_of_travels_offered, users.num_of_travels_takespart "+
+            let q = "select users.id,users.name,users_and_trips.bag,users.rate,users.num_of_travels_offered, users.num_of_travels_takespart,picture "+
             "from users join users_and_trips on users.id = users_and_trips.user_id"+
             " where users_and_trips.trip_id = "+trip_id;
             db.query(q,(err, result) => {
@@ -1309,7 +1310,7 @@ app.get('/getrequest/:trip_id',async  (req ,res) => {
 
 function GetRequestOfTrip(id){
     return new Promise((resolve,reject)=>{
-        let q = "select users.id,users.name,request.bag,users.rate,users.num_of_travels_offered, users.num_of_travels_takespart from users join request"+
+        let q = "select users.id,users.name,request.bag,users.rate,picture,users.num_of_travels_offered, users.num_of_travels_takespart from users join request"+
             " on users.id = request.creator_id where  request.status = 'stand_by' and request.trip_id = "+id;
         db.query(q,(err, result) => {
             if (err || result == 0){
@@ -1900,3 +1901,60 @@ function GetRatesOfUserToAnother(target_id,user_id){
         })
     });
 }
+
+app.get('/uploadimage/:image', async (req,res) => {
+    
+    var image = req.params.image;
+    //console.log()
+    ///await ff(image)
+    res.send(success_handling(image))
+
+    console.log("image")
+
+
+ }); 
+
+
+ //var jsonParser = bodyParser.json();
+ //var urlencodedParser = bodyParser.urlencoded({extended: true});
+ /*app.use(bodyParser.json());
+
+ app.use(bodyParser.urlencoded({extended: true}));
+ app.post('/uploadimage/', (req,res) => {
+    if(!req.body){
+        console.log("req.body");
+    }else{
+        console.log(req);
+    }
+    //var image = req.params.image;
+    //console.log()
+    ///await ff(image)
+    //console.log("req.body")
+    res.send(success_handling("image"))
+
+    //console.log(req.body.bitmap)
+    //console.log(req.body)
+
+
+ }); 
+*/
+
+ function ff(pic){
+    return new Promise((resolve,reject)=>{
+        let q =  "UPDATE fellowtraveller.users SET picture =? WHERE id = 94"        ;
+        //console.log(q)
+        db.query(q,[pic],(err, result) => {
+            if (err){
+                console.log("GetUserAllRatesFromRates")
+                console.log(err)
+                resolve ({});
+            }
+            else{
+                resolve (result[0]);
+            }
+        })
+    });
+ }
+
+
+ 

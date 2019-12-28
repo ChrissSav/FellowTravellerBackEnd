@@ -15,7 +15,7 @@ public class Driver {
 	public Driver(){
 		
 		try {
-			myConn = DriverManager.getConnection("jdbc:mysql://localhost:3306/fellowtraveller","user","user1234");
+			myConn = DriverManager.getConnection("jdbc:mysql://localhost:3306/fellowtraveller","root","rootroot");
 			myStm = myConn.createStatement();
 		} catch (SQLException e) {
 			e.printStackTrace();
