@@ -1907,9 +1907,10 @@ app.get('/uploadimage/:image', async (req,res) => {
     var image = req.params.image;
     //console.log()
     ///await ff(image)
-    res.send(success_handling(image))
+    res.send(success_handling("mpompa"))
 
     console.log("image")
+    console.log(image)
 
 
  }); 
@@ -1917,40 +1918,50 @@ app.get('/uploadimage/:image', async (req,res) => {
 
  //var jsonParser = bodyParser.json();
  //var urlencodedParser = bodyParser.urlencoded({extended: true});
- /*app.use(bodyParser.json());
+ //app.use(bodyParser.json());
 
- app.use(bodyParser.urlencoded({extended: true}));
- app.post('/uploadimage/', (req,res) => {
-    if(!req.body){
+ //app.use(bodyParser.urlencoded({extended: true}));
+
+ app.use(bodyParser.json({limit: '50mb'}));
+ app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
+
+ app.post('/uploadimage/', async (req,res) => {
+    /*if(!req.body){
         console.log("req.body");
     }else{
-        console.log(req);
-    }
+        //console.log(req.body.icon);
+    }*/
     //var image = req.params.image;
     //console.log()
     ///await ff(image)
     //console.log("req.body")
-    res.send(success_handling("image"))
-
+    var id = req.body.id;
+    var picture = req.body.icon;
+    if(await UploadtPictureToId(id,picture)){
+        res.send(success_handling(picture));
+    }else{
+        res.send(error_handling("error"));
+    }
+   // res.send(success_handling(req.body.icon))
     //console.log(req.body.bitmap)
     //console.log(req.body)
 
 
- }); 
-*/
+ });
 
- function ff(pic){
+
+ function UploadtPictureToId(id,pic){
     return new Promise((resolve,reject)=>{
-        let q =  "UPDATE fellowtraveller.users SET picture =? WHERE id = 94"        ;
+        let q =  "UPDATE users SET picture =? WHERE id = ?"        ;
         //console.log(q)
-        db.query(q,[pic],(err, result) => {
+        db.query(q,[pic,id],(err, result) => {
             if (err){
                 console.log("GetUserAllRatesFromRates")
                 console.log(err)
-                resolve ({});
+                resolve (false);
             }
             else{
-                resolve (result[0]);
+                resolve (true);
             }
         })
     });
