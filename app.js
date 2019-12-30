@@ -1664,8 +1664,13 @@ app.get('/getTripsFilter/:from/:to/:date_from/:date_to/:time_from/:time_to/:seat
                 currentTrip.setDate(date);
                 var creator = await getTripCreator(trips[i].id);
                 creator = JSON.parse(JSON.stringify(creator[0]));
+                creator = new class_user(creator);
                 var users = await getPassengersOfTrip(trips[i].id);
                 users = JSON.parse(JSON.stringify(users));
+                //console.log(users)
+                for(const  i=0; i<users.length; i++){
+                    users[i] = new class_user(users[i]);
+                }
                 currentTrip.setPassengers(users);
                 currentTrip.setCreator(creator);
                 teliko.push(currentTrip);
