@@ -15,10 +15,10 @@ class User{
 }
 
 function Convert(pic){
-    if(pic==''){
+    if(pic=='' || pic==null){
         return "null";
     }else{
-        return result;
+        return pic;
     }
 }
 module.exports = User;

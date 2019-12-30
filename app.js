@@ -990,6 +990,7 @@ app.get('/getUserTrips/:id/',async  (req ,res) => {
     if(trips==0){
         res.send([])
     }else{
+        
         var teliko=[];
         trips = JSON.parse(JSON.stringify(trips));
         for (var i = 0; i <trips.length; i++) {
