@@ -73,17 +73,20 @@ async function check(table,key,id){
 
 //=====fuction check if exist in table=============
 function checkIfExistInTable(table,key,id){
-    const q = "select * from "+table+" where "+key+"="+id;
-    //console.log(q)
     return new Promise((resolve,reject)=>{
-        db.query(q, function (err, result) {
-            if (err  || result.length==0){ 
+        let q = "select * from "+table+" where "+key+"='"+id+"'";
+       // console.log(q);
+        db.query(q,(err, result) => {
+            if (err || result == 0){
+                //console.log(false);
                 resolve (false);
-            }else{ 
-                resolve(true);
-            } 
+            }
+            else{
+                //console.log(result);
+                resolve (true);
+            }
         })
-    })
+    });
 }
 async function SetRateOfRow(table,key,id,stars){
     let str = parseFloat(stars);
@@ -233,6 +236,7 @@ app.get('/registeruser/:name/:birthday/:email/:password/:phone', async (req, res
     let password = req.params.password;
     let email = req.params.email;
     let phone = req.params.phone;
+    //console.log(email)
     try {
         
         if(phone.length!=10){
@@ -247,7 +251,8 @@ app.get('/registeruser/:name/:birthday/:email/:password/:phone', async (req, res
         else if(!validateEmail(email)){
             res.send(error_handling("lahtos email"));
         }
-        else if(await check("users","email",email)){
+        else if(await checkIfExistInTable("users","email",email)){
+            console.log("iugreghurgeg")
             res.send(error_handling("yparxei xristi me auto to email"));
         }
         else if (await RegisterUser(name,birthday,email,password,phone)){
@@ -363,6 +368,7 @@ function RegisterUser(name,birthday,email,password,phone){
         db.query("INSERT INTO users (name,birthday, email, password,phone) VALUES (?,?,?,?,?)", 
         [name,birthday,email,password,phone],(err, result) => {
             if (err){
+                console.log(err)
                 resolve(false);
             }
 		    else{

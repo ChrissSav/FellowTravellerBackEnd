@@ -4,6 +4,7 @@ class User{
         this.name= user.name,
         this.birthday= user.birthday,
         this.emai= user.email,
+        this.bag= user.bag,
         this.password= user.password,
         this.phone= user.phone,
         this.picture = Convert(user.picture),
