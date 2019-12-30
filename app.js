@@ -499,7 +499,7 @@ app.get('/trips/:from/:to/:date/:time/:creator_id/:description/:max_seats/:max_b
     let max_seats = req.params.max_seats;
     let max_bags = req.params.max_bags;
     let price = req.params.price;
-    console.log("creator_id "+creator_id)
+    console.log("creator_id "+creator_id);
     //console.log("to = "+to+"  legth = "+to.length);
 
    /* if(from===" "){
@@ -532,12 +532,12 @@ app.get('/trips/:from/:to/:date/:time/:creator_id/:description/:max_seats/:max_b
         }
     }*/
     if(await registerTrip(from,to,date,time,creator_id,description,max_seats,max_bags,price)){
-        res.send(success_handling(1,"success"));
+        res.send(success_handling("success"));
         //console.log(success_handling(1,"success"))
     }
     else{
       //  console.log(success_handling(2,"error"))
-        res.send(error_handling(2,"error"));
+        res.send(error_handling("error"));
     }
     
 });
@@ -834,9 +834,14 @@ app.get('/gettripstakespart/:user_id',async  (req ,res) => {
             var currentTrip = new class_trip(trips[i]);
             var creator = await getTripCreator(trips[i].id);
             creator = JSON.parse(JSON.stringify(creator[0]));
-            var users = await getPassengersOfTrip(trips[i].id);
-            users = JSON.parse(JSON.stringify(users));
-            currentTrip.setPassengers(users);
+            creator = new class_user(creator);
+            var pass = await getPassengersOfTrip(trips[i].id);
+            pass = JSON.parse(JSON.stringify(pass));
+            for(var  j=0; j<pass.length; j++){
+                //console.log(pass.length)
+                pass[j] = new class_user(pass[j]);
+            }
+            currentTrip.setPassengers(pass);
             currentTrip.setCreator(creator);
             var date = currentTrip.getDate();
             date = ChangeFromat(date);
@@ -1675,7 +1680,6 @@ app.get('/getTripsFilter/:from/:to/:date_from/:date_to/:time_from/:time_to/:seat
                 currentTrip.setCreator(creator);
                 teliko.push(currentTrip);
             }
-
 
             res.send(teliko);
         }
