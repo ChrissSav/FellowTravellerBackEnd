@@ -5,6 +5,7 @@ let success_handling = require('./success_handling');
 let class_trip = require('./class_trip');
 let class_notification = require('./class_notification');
 let class_userinfo = require('./class_userinfo');
+let class_user = require('./class_user');
 let class_rateItem = require('./class_rateItem');
 var sleep = require('system-sleep');
 var bodyParser = require('body-parser')
@@ -775,15 +776,21 @@ app.get('/gettrip/:id',async  (req ,res) => {
         trip = JSON.parse(JSON.stringify(trip[0]));
         trip = new class_trip(trip);
         var users = await getPassengersOfTrip(req.params.id);
+        users = JSON.parse(JSON.stringify(users));
+        console.log(users)
+        for(const  i=0; i<users.length; i++){
+            users[i] = new class_user(users[i]);
+        }
         var creator = await getTripCreator(req.params.id);
         creator = JSON.parse(JSON.stringify(creator[0]));
-        users = JSON.parse(JSON.stringify(users));
+        creator = new class_user(creator);
         trip.setPassengers(users);
         trip.setCreator(creator);
         var v = [];
         v.push(trip);
         res.send(v);
     }catch (err){
+        console.log('/gettrip/:id')
         console.log(err)
         res.send(error_handling(err+""));
     }
@@ -983,8 +990,12 @@ app.get('/getUserTrips/:id/',async  (req ,res) => {
             currentTrip.setDate(date);
             var creator = await getTripCreator(trips[i].id);
             creator = JSON.parse(JSON.stringify(creator[0]));
+            creator = new class_user(creator);
             var users = await getPassengersOfTrip(trips[i].id);
             users = JSON.parse(JSON.stringify(users));
+            for(var  j=0; j<users.length; j++){
+                users[j] = new class_user(users[j]);
+            }
             currentTrip.setPassengers(users);
             currentTrip.setCreator(creator);
             if(requests==0){
@@ -1428,12 +1439,16 @@ app.get('/getnotification/:target_id',async  (req ,res) => {
             console.log("Προσθηκη δημιουργου του ταξιδιου")
             var creator = await getTripCreator(notification[i].trip_id);
             creator = JSON.parse(JSON.stringify(creator[0]));
+            creator = new class_user(creator);
             current_trip.setCreator(creator);
             //Προσθηκη επιβατων
             console.log("Προσθηκη επιβατων")
             if(currentNotification.type=="request" || currentNotification.type=="accept"){
                 var passengers = await getPassengersOfTrip(notification[i].trip_id);
                 passengers = JSON.parse(JSON.stringify(passengers));
+                for(const  i=0; i<passengers.length; i++){
+                    passengers[i] = new class_user(passengers[i]);
+                }
                 current_trip.setPassengers(passengers);
             }
             //Προσθηκη αιτηματων
@@ -1442,7 +1457,13 @@ app.get('/getnotification/:target_id',async  (req ,res) => {
                 requests = JSON.parse(JSON.stringify(requests));
                 if(requests==0){
                     requests=[];
-                }        
+                }     
+                else{
+                    for(var  j=0; j<requests.length; j++){
+                        requests[j] = new class_user(requests[j]);
+                    }
+                }   
+                //console.log(requests.length)
                 current_trip.setRequests(requests);
             }
             //Λοιπα
@@ -1934,11 +1955,17 @@ app.get('/uploadimage/:image', async (req,res) => {
     //var image = req.params.image;
     //console.log()
     ///await ff(image)
-    //console.log("req.body")
+   // console.log(req.body)
     var id = req.body.id;
     var picture = req.body.icon;
     if(await UploadtPictureToId(id,picture)){
-        res.send(success_handling(picture));
+        var mm = await GetUserImage(id);
+        mm = JSON.parse(JSON.stringify(mm)); 
+        var teliko = [];
+        //console.log(mm[0])
+
+         var bufferBase64 = Buffer.from( mm[0].picture.data, 'binary' ).toString('base64');
+        res.send(success_handling(bufferBase64));
     }else{
         res.send(error_handling("error"));
     }
@@ -1968,4 +1995,41 @@ app.get('/uploadimage/:image', async (req,res) => {
  }
 
 
- 
+ app.get('/vv/:id', async (req,res) => {
+   
+    var mm = await GetUserImage(req.params.id);
+    mm = JSON.parse(JSON.stringify(mm)); 
+    var teliko = [];
+    //console.log(mm[0])
+
+   var bufferBase64 = Buffer.from( mm[0].picture.data, 'binary' ).toString('base64');
+    //for(const i=0; i<id.length; i++){
+
+   // }
+   res.send(success_handling(bufferBase64));
+
+    //res.send(success_handling("mm"));
+ });
+   // res.send(success_handling(req.body.icon))
+    //console.log(req.body.bitmap)
+    //console.log(req.body)
+
+
+
+ function GetUserImage(id){
+    return new Promise((resolve,reject)=>{
+        let q =  "select id,picture from users  where id= "+id;
+      //  console.log(q)
+        db.query(q,(err, result) => {
+            if (err){
+                console.log("vv")
+                console.log(err)
+                resolve ([]);
+            }
+            else{
+               // console.log(result)
+                resolve (result);
+            }
+        })
+    });
+ }
