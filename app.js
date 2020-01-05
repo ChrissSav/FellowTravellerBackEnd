@@ -445,6 +445,25 @@ function getUserNumOfTrispOffersFromTable(user_id){
     });
 }
 
+function getUserNumOfTrispTakePartFromTable(user_id){
+    return new Promise((resolve,reject)=>{
+        let q = "SELECT COUNT(*) count FROM users_and_trips "+
+        " WHERE users_and_trips.user_id= "+user_id;
+            db.query(q,(err, result) => {
+                if (err || result == 0){
+                   // console.log(false);
+                    resolve (0);
+                }
+                else{
+                  //  console.log(true);
+                //  console.log(result[0].count)
+                    resolve (result[0].count);
+                }
+            })
+
+    });
+}
+
 function getUserNumOfTrispOffers(user_id){
     return new Promise((resolve,reject)=>{
         let q = "SELECT num_of_travels_offered FROM users "+
@@ -458,6 +477,46 @@ function getUserNumOfTrispOffers(user_id){
                   //  console.log(true);
                 //  console.log(result[0].count)
                     resolve (result[0].num_of_travels_offered);
+                }
+            })
+
+    });
+}
+
+async function UpdateUserNumOfTripsOffers(user_id){
+    return new Promise(async (resolve,reject)=> {
+        let num = await getUserNumOfTrispOffers(user_id)
+        let q = "update users set num_of_travels_offered = "+num+" where id = "+user_id;
+            db.query(q,(err, result) => {
+                if (err || result == 0){
+                    console.log("UpdateUserNumOfTrispOffers");
+                    console.log(err);
+                    resolve (false);
+                }
+                else{
+                  //  console.log(true);
+                //  console.log(result[0].count)
+                    resolve (true);
+                }
+            })
+
+    });
+}
+
+async function UpdateUserNumOfTripsTakePart(user_id){
+    return new Promise(async (resolve,reject)=>{
+        let num = await getUserNumOfTrispTakePartFromTable(user_id)
+        let q = "update users set num_of_travels_takespart = "+num+" where id = "+user_id;
+            db.query(q,(err, result) => {
+                if (err || result == 0){
+                    console.log("UpdateUserNumOfTrispTakePart");
+                    console.log(err);
+                    resolve (false);
+                }
+                else{
+                  //  console.log(true);
+                //  console.log(result[0].count)
+                    resolve (true);
                 }
             })
 
@@ -539,6 +598,7 @@ app.get('/trips/:from/:to/:date/:time/:creator_id/:description/:max_seats/:max_b
     }*/
     if(await registerTrip(from,to,date,time,creator_id,description,max_seats,max_bags,price)){
         res.send(success_handling("success"));
+        await UpdateUserNumOfTripsOffers(creator_id)
         //console.log(success_handling(1,"success"))
     }
     else{
@@ -990,7 +1050,7 @@ app.get('/getUserTrips/:id/',async  (req ,res) => {
     if(trips==0){
         res.send([])
     }else{
-        
+
         var teliko=[];
         trips = JSON.parse(JSON.stringify(trips));
         for (var i = 0; i <trips.length; i++) {
@@ -1009,6 +1069,7 @@ app.get('/getUserTrips/:id/',async  (req ,res) => {
                 users[j] = new class_user(users[j]);
             }
             currentTrip.setPassengers(users);
+
             currentTrip.setCreator(creator);
             if(requests==0){
                 requests=[];
@@ -1208,6 +1269,7 @@ app.get('/changerequeststatus/:user_id/:bag/:trip_id/:status',async  (req ,res) 
                 target_id = JSON.parse(JSON.stringify(target_id[0]))
                 target_id = target_id.id;
                 if (await RegisterNotification(target_id,user_id,trip_id,"accept")){
+                    await UpdateUserNumOfTripsTakePart(target_id);
                     res.send(success_handling("success")); 
                 }else{
                     res.send(error_handling("error"));
@@ -1680,8 +1742,8 @@ app.get('/getTripsFilter/:from/:to/:date_from/:date_to/:time_from/:time_to/:seat
                 var users = await getPassengersOfTrip(trips[i].id);
                 users = JSON.parse(JSON.stringify(users));
                 //console.log(users)
-                for(const  i=0; i<users.length; i++){
-                    users[i] = new class_user(users[i]);
+                for(var  j=0; j<users.length; j++){
+                    users[j] = new class_user(users[j]);
                 }
                 currentTrip.setPassengers(users);
                 currentTrip.setCreator(creator);
@@ -1692,6 +1754,7 @@ app.get('/getTripsFilter/:from/:to/:date_from/:date_to/:time_from/:time_to/:seat
         }
         
     });
+
     
     function getTripByfilter(query,id){
         return new Promise((resolve,reject)=>{

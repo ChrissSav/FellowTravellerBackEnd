@@ -89,6 +89,7 @@ public class Driver {
 				//System.out.println(pst.toString());
 				if(pst.executeUpdate()>0){
 					System.out.println("RegisterNotificationToRate  Mpompa");
+					System.out.println("target_id : "+ target_id+"user_id :"+user_id+"trip_id :"+trip_id);
 				}else{
 					System.out.println("RegisterNotificationToRate  no mpompa");
 				}
