@@ -204,6 +204,15 @@ app.get('/users', (req,res) => {
 });
 
 
+app.get('/CheckUserInfo/:id',async (req,res) => {
+    try{
+        res.send(await GetUserInfo(req.params.id))
+    }catch(err){
+        res.send(error_handling(error))
+    }
+
+});
+
 app.get('/getuserauth/:email/:pass',async (req,res) => {
     try{
         res.send(await getUserAuth(req.params.email,req.params.pass))
@@ -215,7 +224,7 @@ app.get('/getuserauth/:email/:pass',async (req,res) => {
 
 function getUserAuth(email,password){
     return new Promise((resolve,reject)=>{
-        db.query("select * from users where email = ? and password = ?", 
+        db.query("select id,name,email,picture,rate,num_of_travels_offered,num_of_travels_takespart from users where email = ? and password = ?", 
         [email,password],(err, result) => {
             if (err || result == 0){             
                 resolve(error_handling('error'));
@@ -227,7 +236,19 @@ function getUserAuth(email,password){
     }); 
 }
 
-
+function GetUserInfo(id){
+    return new Promise((resolve,reject)=>{
+        db.query("select id,name,email,picture,rate,num_of_travels_offered,num_of_travels_takespart from users where id = ?", 
+        [id],(err, result) => {
+            if (err || result == 0){             
+                resolve(error_handling('error'));
+            }
+		    else{
+                resolve(result[0]);
+            }
+        })
+    }); 
+}
 
 
 app.get('/registeruser/:name/:birthday/:email/:password/:phone', async (req, res) => { 
@@ -1520,8 +1541,8 @@ app.get('/getnotification/:target_id',async  (req ,res) => {
             if(currentNotification.type=="request" || currentNotification.type=="accept"){
                 var passengers = await getPassengersOfTrip(notification[i].trip_id);
                 passengers = JSON.parse(JSON.stringify(passengers));
-                for(const  i=0; i<passengers.length; i++){
-                    passengers[i] = new class_user(passengers[i]);
+                for(const  j=0; i<passengers.length; j++){
+                    passengers[j] = new class_user(passengers[j]);
                 }
                 current_trip.setPassengers(passengers);
             }
@@ -2038,13 +2059,11 @@ app.get('/uploadimage/:image', async (req,res) => {
     var id = req.body.id;
     var picture = req.body.icon;
     if(await UploadtPictureToId(id,picture)){
-        var mm = await GetUserImage(id);
-        mm = JSON.parse(JSON.stringify(mm)); 
-        var teliko = [];
+        //var mm = await GetUserImage(id);
+       // mm = JSON.parse(JSON.stringify(mm)); 
+       // var teliko = [];
         //console.log(mm[0])
-
-         var bufferBase64 = Buffer.from( mm[0].picture.data, 'binary' ).toString('base64');
-        res.send(success_handling(bufferBase64));
+        res.send(success_handling(picture));
     }else{
         res.send(error_handling("error"));
     }
