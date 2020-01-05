@@ -1541,7 +1541,7 @@ app.get('/getnotification/:target_id',async  (req ,res) => {
             if(currentNotification.type=="request" || currentNotification.type=="accept"){
                 var passengers = await getPassengersOfTrip(notification[i].trip_id);
                 passengers = JSON.parse(JSON.stringify(passengers));
-                for(const  j=0; i<passengers.length; j++){
+                for(var  j=0; j<passengers.length; j++){
                     passengers[j] = new class_user(passengers[j]);
                 }
                 current_trip.setPassengers(passengers);
@@ -1624,7 +1624,7 @@ function getUserById(id,trip_id){
 }
 function getUserByIdSecond(id){
     return new Promise((resolve,reject)=>{
-        let q = "select id,name,rate,num_of_travels_offered,num_of_travels_takespart from users"
+        let q = "select id,name,rate,picture,num_of_travels_offered,num_of_travels_takespart from users"
         +" where users.id = "+id;
         db.query(q,(err,result) => {
             if(err || result == 0){
@@ -1827,7 +1827,7 @@ app.get('/registerRate/:user_id/:target_id/:friendly/:reliable/:careful/:consist
     let reliable = req.params.reliable;
     let careful = req.params.careful;
     let consistent = req.params.consistent;
-
+    console.log("hguoighg")
     let description = req.params.description;
     let status = await registerRate(user_id,target_id,friendly,reliable,careful,consistent,description);
     if (status){
@@ -1970,6 +1970,7 @@ app.get('/GetUsersRateAnother/:target_id', async (req, res) => {
     let target_id = req.params.target_id;
     var allUsers = await GetUsersRateAnother(target_id);
     allUsers = JSON.parse(JSON.stringify(allUsers)); 
+    console.log
     for(var i=0; i<allUsers.length; i++){
         var rate = new class_rateItem()
         rate.setUser(allUsers[i]);
@@ -1979,7 +1980,6 @@ app.get('/GetUsersRateAnother/:target_id', async (req, res) => {
         rate.setRate(temp.sumrate);
         rate.setDate(ChangeFromat(temp.date))
         rate.setDescription(temp.description);
-        
 
         teliko.push(rate);
     }
@@ -1989,7 +1989,7 @@ app.get('/GetUsersRateAnother/:target_id', async (req, res) => {
 
 function GetUsersRateAnother(target_id){
     return new Promise((resolve,reject)=>{
-        let q =  "SELECT users.id,users.name,users.rate,users.num_of_travels_offered, users.num_of_travels_takespart "+
+        let q =  "SELECT users.id,users.picture,users.name,users.rate,users.num_of_travels_offered, users.num_of_travels_takespart "+
         "from users join rates on users.id=rates.user_id "
         +" where rates.target_id="+target_id+ " GROUP BY users.id  ";
         db.query(q,(err, result) => {
@@ -2093,26 +2093,7 @@ app.get('/uploadimage/:image', async (req,res) => {
  }
 
 
- app.get('/vv/:id', async (req,res) => {
-   
-    var mm = await GetUserImage(req.params.id);
-    mm = JSON.parse(JSON.stringify(mm)); 
-    var teliko = [];
-    //console.log(mm[0])
-
-   var bufferBase64 = Buffer.from( mm[0].picture.data, 'binary' ).toString('base64');
-    //for(const i=0; i<id.length; i++){
-
-   // }
-   res.send(success_handling(bufferBase64));
-
-    //res.send(success_handling("mm"));
- });
-   // res.send(success_handling(req.body.icon))
-    //console.log(req.body.bitmap)
-    //console.log(req.body)
-
-
+ 
 
  function GetUserImage(id){
     return new Promise((resolve,reject)=>{
