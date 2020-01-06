@@ -1571,6 +1571,20 @@ app.get('/getnotification/:target_id',async  (req ,res) => {
     }
 });
 
+
+
+app.get('/getnotificationcount/:target_id',async  (req ,res) => {
+    var id = req.params.target_id;
+    let l = await GetNotificationOfUser(id);
+    if(l==0){
+        res.send(success_handling(l));
+    }else{
+        res.send(success_handling(l.length+""));
+    }
+    
+    
+});
+
 function getTripN(trip_id){
     return new Promise((resolve,reject)=>{
         let q ="select id,ffrom ,tto ,date,time,"+
@@ -1985,6 +1999,7 @@ app.get('/GetUsersRateAnother/:target_id', async (req, res) => {
     }
     res.send(teliko);
 })
+
 
 
 function GetUsersRateAnother(target_id){
