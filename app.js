@@ -386,7 +386,7 @@ function getUserid(email){
 }
 function RegisterUser(name,birthday,email,password,phone){
     return new Promise((resolve,reject)=>{
-        db.query("INSERT INTO users (name,birthday, email, password,phone) VALUES (?,?,?,?,?)", 
+        db.query("INSERT INTO users (name,birthday, email, password,phone,picture) VALUES (?,?,?,?,?,'null')", 
         [name,birthday,email,password,phone],(err, result) => {
             if (err){
                 console.log(err)
