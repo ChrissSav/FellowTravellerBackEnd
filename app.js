@@ -9,6 +9,17 @@ let class_user = require('./class_user');
 let class_rateItem = require('./class_rateItem');
 var sleep = require('system-sleep');
 var bodyParser = require('body-parser')
+var pool  = mysql.createPool({
+    host: 'localhost',
+    user: 'root',
+    password: 'rootroot',
+    database: 'fellowtraveller'
+  });
+  
+  pool.query('SELECT 1 + 1 AS solution', function (error, results, fields) {
+    if (error) throw error;
+    console.log('The solution is: ', results[0].solution);
+  });
 
 
 const db = mysql.createConnection({
@@ -1444,9 +1455,10 @@ function GetRequestOfTrip(id){
     }
 });*/
 function RegisterNotification(target_id,user_id,trip_id,type){
+    console.log(target_id,user_id,trip_id,type)
     return new Promise((resolve,reject)=>{
         db.query("insert into notification (target_id,user_id,trip_id,type) values (?,?,?,?)",
-        [target_id,user_id,trip_id,type],(err, result) => {
+        [user_id,target_id,trip_id,type],(err, result) => {
             if (err || result == 0){
                 resolve (false);
                 console.log(err)
