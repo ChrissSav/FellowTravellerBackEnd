@@ -9,17 +9,6 @@ let class_user = require('./class_user');
 let class_rateItem = require('./class_rateItem');
 var sleep = require('system-sleep');
 var bodyParser = require('body-parser')
-var pool  = mysql.createPool({
-    host: 'localhost',
-    user: 'root',
-    password: 'rootroot',
-    database: 'fellowtraveller'
-  });
-  
-  pool.query('SELECT 1 + 1 AS solution', function (error, results, fields) {
-    if (error) throw error;
-    console.log('The solution is: ', results[0].solution);
-  });
 
 
 const db = mysql.createConnection({
@@ -32,19 +21,21 @@ const db = mysql.createConnection({
 
 db.connect((error) => {
     if(error){
-        console.log(error);        
+        console.log("db.connect((error)"); 
+        console.log(error);    
+        db.connect();    
     }
     else{
         console.log('Mysql connected');
     }
 })
 
+
 const app = express();
 
 app.listen('5000', () => {
     console.log("on port 5000")
 });
-
 app.get('', (req,res) => {
     res.send("Καλώ ήρθατε στο Api του FellowTraveller");
 });
@@ -1996,17 +1987,17 @@ app.get('/GetUsersRateAnother/:target_id', async (req, res) => {
     let target_id = req.params.target_id;
     var allUsers = await GetUsersRateAnother(target_id);
     allUsers = JSON.parse(JSON.stringify(allUsers)); 
-    console.log
+    //console.log(allUsers)
     for(var i=0; i<allUsers.length; i++){
         var rate = new class_rateItem()
+        
+        let temp = await GetRatesOfUserToAnother(target_id,allUsers[i].id,allUsers[i].id_of_rate);
+        delete allUsers[i].id_of_rate;
         rate.setUser(allUsers[i]);
-        let temp = await GetRatesOfUserToAnother(target_id,allUsers[i].id);
         temp = JSON.parse(JSON.stringify(temp)); 
-       // console.log(temp)
         rate.setRate(temp.sumrate);
         rate.setDate(ChangeFromat(temp.date))
         rate.setDescription(temp.description);
-
         teliko.push(rate);
     }
     res.send(teliko);
@@ -2016,9 +2007,9 @@ app.get('/GetUsersRateAnother/:target_id', async (req, res) => {
 
 function GetUsersRateAnother(target_id){
     return new Promise((resolve,reject)=>{
-        let q =  "SELECT users.id,users.picture,users.name,users.rate,users.num_of_travels_offered, users.num_of_travels_takespart "+
+        let q =  "SELECT users.id,users.picture,users.name,users.rate,users.num_of_travels_offered,rates.id as id_of_rate, users.num_of_travels_takespart "+
         "from users join rates on users.id=rates.user_id "
-        +" where rates.target_id="+target_id+ " GROUP BY users.id  ";
+        +" where rates.target_id="+target_id+ " ";
         db.query(q,(err, result) => {
             if (err){
                 console.log("GetUserAllRatesFromRates")
@@ -2026,16 +2017,17 @@ function GetUsersRateAnother(target_id){
                 resolve ([]);
             }
             else{
+                
                 resolve (result);
             }
         })
     });
 }
 
-function GetRatesOfUserToAnother(target_id,user_id){
+function GetRatesOfUserToAnother(target_id,user_id,id_of_rate){
     return new Promise((resolve,reject)=>{
         let q =  "SELECT (sum(friendly+reliable+careful+consistent)/4)/count(friendly+reliable+careful+consistent) as sumrate,date,description"
-        +" from rates where target_id = "+target_id+ " and user_id = "+user_id;
+        +" from rates where target_id = "+target_id+ " and user_id = "+user_id+ " and id = "+id_of_rate;
         //console.log(q)
         db.query(q,(err, result) => {
             if (err){
