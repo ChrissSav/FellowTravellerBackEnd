@@ -326,6 +326,7 @@ function GetUserRateFromUsersTable(id){
 
 function SetUserRateFromUsersTable(id,num){
     return new Promise((resolve,reject)=>{
+        num = parseFloat(num).toFixed(2);
         let q = "update users set rate = "+num+" where id = "+id;
         db.query(q,(err, result) => {
             if (err){
@@ -1050,8 +1051,9 @@ async function getPassengersOfTrip(trip_id){
             let q = "select users.id,users.name,users_and_trips.bag,users.rate,users.num_of_travels_offered, users.num_of_travels_takespart,picture "+
             "from users join users_and_trips on users.id = users_and_trips.user_id"+
             " where users_and_trips.trip_id = "+trip_id;
-            db.query(q,(err, result) => {
-                if (err || result == 0){
+            db.query(q,(err, result) => {               
+                if (err ){
+                    console.log("getPassengersOfTrip");
                     console.log(err);
                     resolve ([]);
                 }
@@ -1155,16 +1157,16 @@ function RegisterPassengerToTrip(user_id,bag,trip_id){
         })
     });
 }
-
 //Register to Trip
 async function RegisterUserToTrip(user_id,bag,target_id,trip_id){
+    console.log("target_id :"+target_id," user_id :"+user_id,trip_id)
     // register requst
     try{
         let register_status = await RegisterRequest(user_id,bag,trip_id);
         
         if (register_status==1){
           //  console.log("register_status : "+register_status)
-            //send notifcation  makis
+            //send notifcation  makista
             let notification_status = await RegisterNotification(target_id,user_id,trip_id,"request");
             if (notification_status){
               //  console.log("notification_status true ")
@@ -1278,7 +1280,8 @@ app.get('/changerequeststatus/:user_id/:bag/:trip_id/:status',async  (req ,res) 
     let trip_id = req.params.trip_id;
     let user_id = req.params.user_id;
     let bag = req.params.bag;
-    console.log("bags= "+bag)
+    console.log("/changerequeststatus/:user_id/:bag/:trip_id/:status");
+    console.log("user_id: "+user_id,"trip_id: "+trip_id,"bags= "+bag);
     let status = await ChangeRequestStatus(user_id,trip_id,st);
     if (status == 1){
         if(st=="accept"){
@@ -1289,7 +1292,7 @@ app.get('/changerequeststatus/:user_id/:bag/:trip_id/:status',async  (req ,res) 
                 var target_id = await getTripCreator(trip_id);
                 target_id = JSON.parse(JSON.stringify(target_id[0]))
                 target_id = target_id.id;
-                if (await RegisterNotification(target_id,user_id,trip_id,"accept")){
+                if (await RegisterNotification(user_id,target_id,trip_id,"accept")){
                     await UpdateUserNumOfTripsTakePart(target_id);
                     res.send(success_handling("success")); 
                 }else{
@@ -1304,7 +1307,7 @@ app.get('/changerequeststatus/:user_id/:bag/:trip_id/:status',async  (req ,res) 
             var target_id = await getTripCreator(trip_id);
             target_id = JSON.parse(JSON.stringify(target_id[0]))
             target_id = target_id.id;
-            if (await RegisterNotification(target_id,user_id,trip_id,"reject")){
+            if (await RegisterNotification(user_id,target_id,trip_id,"reject")){
                 res.send(success_handling("success")); 
             }else{
                 res.send(error_handling("error"));
@@ -1444,10 +1447,11 @@ function GetRequestOfTrip(id){
     }
 });*/
 function RegisterNotification(target_id,user_id,trip_id,type){
-    console.log(target_id,user_id,trip_id,type)
+    console.log("RegisterNotification");
+    console.log("target_id :"+target_id," user_id :"+user_id,trip_id,type);
     return new Promise((resolve,reject)=>{
         db.query("insert into notification (target_id,user_id,trip_id,type) values (?,?,?,?)",
-        [user_id,target_id,trip_id,type],(err, result) => {
+        [target_id,user_id,trip_id,type],(err, result) => {
             if (err || result == 0){
                 resolve (false);
                 console.log(err)
@@ -1511,12 +1515,12 @@ app.get('/getnotification/:target_id',async  (req ,res) => {
         var teliko=[];
         var notification = l;
         notification = JSON.parse(JSON.stringify(notification));
-        
+        //console.log(notification);       
          for (var i = 0; i<notification.length; i++) {
             var currentNotification = new class_notification(notification[i]);
             var current_trip = await getTripN(notification[i].trip_id);
             current_trip = new class_trip(current_trip[0])
-            console.log("Προσθεση παραληπτη")
+            //console.log("Προσθεση παραληπτη")
             //Προσθεση παραληπτη
             if(notification[i].type=="rate"){
                 var user = await getUserByIdSecond(notification[i].user_id);
@@ -1527,18 +1531,18 @@ app.get('/getnotification/:target_id',async  (req ,res) => {
                 currentNotification.setUser(user)
             }
             //Αλλαγη της μορφης της ημερ/νιας
-            console.log("Αλλαγη της μορφης της ημερ/νιας")
+            //console.log("Αλλαγη της μορφης της ημερ/νιας")
             var date = current_trip.getDate();
             date = ChangeFromat(date);
             current_trip.setDate(date);
             //Προσθηκη δημιουργου του ταξιδιου
-            console.log("Προσθηκη δημιουργου του ταξιδιου")
+            //console.log("Προσθηκη δημιουργου του ταξιδιου")
             var creator = await getTripCreator(notification[i].trip_id);
             creator = JSON.parse(JSON.stringify(creator[0]));
             creator = new class_user(creator);
             current_trip.setCreator(creator);
             //Προσθηκη επιβατων
-            console.log("Προσθηκη επιβατων")
+            //console.log("Προσθηκη επιβατων")
             if(currentNotification.type=="request" || currentNotification.type=="accept"){
                 var passengers = await getPassengersOfTrip(notification[i].trip_id);
                 passengers = JSON.parse(JSON.stringify(passengers));
