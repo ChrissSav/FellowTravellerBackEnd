@@ -7,9 +7,7 @@ let class_notification = require('./class_notification');
 let class_userinfo = require('./class_userinfo');
 let class_user = require('./class_user');
 let class_rateItem = require('./class_rateItem');
-var sleep = require('system-sleep');
 var bodyParser = require('body-parser')
-
 
 const db = mysql.createConnection({
     host: 'localhost',
@@ -1666,20 +1664,20 @@ app.get('/getTripsFilter/:from/:to/:date_from/:date_to/:time_from/:time_to/:seat
 
         var list = [];
         let id = req.params.id;
-        list.push(req.params.from);
-        list.push(req.params.to);
-        list.push(req.params.date_from);
-        list.push(req.params.date_to); 
-        list.push(req.params.time_from);
-        list.push(req.params.time_to);
-        list.push(req.params.seats_min);
-        list.push(req.params.seats_max);
-        list.push(req.params.bags_min);
-        list.push(req.params.bags_max);
-        list.push(req.params.rate_min);
-        list.push(req.params.rate_max);
-        list.push(req.params.price_min);
-        list.push(req.params.price_max);
+        list.push(req.params.from);//0
+        list.push(req.params.to);//1
+        list.push(req.params.date_from);//2
+        list.push(req.params.date_to); //3
+        list.push(req.params.time_from);//4
+        list.push(req.params.time_to);//5
+        list.push(req.params.seats_min);//6
+        list.push(req.params.seats_max);//7
+        list.push(req.params.bags_min);//8
+        list.push(req.params.bags_max);//9
+        list.push(req.params.rate_min);//10
+        list.push(req.params.rate_max);//11
+        list.push(req.params.price_min);//12
+        list.push(req.params.price_max);//13
     
         var list2 = []
         for (var i=0; i<list.length; i++){
@@ -1716,22 +1714,22 @@ app.get('/getTripsFilter/:from/:to/:date_from/:date_to/:time_from/:time_to/:seat
                     break;
                 case 6:
                     if(list[i]!=0){
-                        list2.push("+current_num_of_seats >= "+list[i]);
+                        list2.push("+(max_seats-current_num_of_seats) >= "+list[i]);
                     }
                     break;
                 case 7:
                     if(list[i]!=0){
-                        list2.push("+current_num_of_seats <= "+list[i]);
+                        list2.push("+(max_seats-current_num_of_seats) <= "+list[i]);
                     }
                     break;
                 case 8:
                     if(list[i]!=0){
-                        list2.push("+current_num_of_bags >= "+list[i]);
+                        list2.push("+(max_bags-current_num_of_bags) >= "+list[i]);
                     }
                     break;
                 case 9:
                     if(list[i]!=0){
-                        list2.push("+current_num_of_bags <= "+list[i]);
+                        list2.push("+(max_bags-current_num_of_bags) <= "+list[i]);
                     }
                     break;
                 case 10:
@@ -2002,7 +2000,6 @@ app.get('/GetUsersRateAnother/:target_id', async (req, res) => {
     }
     res.send(teliko);
 })
-
 
 
 function GetUsersRateAnother(target_id){
