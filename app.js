@@ -288,7 +288,49 @@ app.get('/registeruser/:name/:birthday/:email/:password/:phone', async (req, res
         res.send(error_handling(error+""));
     }
 });
+app.use(bodyParser.json({limit: '50mb'}));
+app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
 
+app.post('/registerUser', async (req, res) => { 
+    let name = req.body.name;
+    let birthday = req.body.birthday;
+    let password = req.body.password;
+    let email = req.body.email;
+    let phone = req.body.phone;
+    //var v = req.body
+   // console.log(v)
+    //console.log(email)
+    try {
+        
+        if(phone.length!=10){
+            res.send(error_handling("to til prepei na einai 10 noymera"));
+        }
+        else if(phone[0]!=='6' || phone[1]!=='9'){
+            res.send(error_handling("to til prepei na arxizei apo 69"));
+        }
+        else if(email.length==0){
+            res.send(error_handling("Email einai keno"));
+        }
+        else if(!validateEmail(email)){
+            res.send(error_handling("lahtos email"));
+        }
+        else if(await checkIfExistInTable("users","email",email)){
+            console.log("iugreghurgeg")
+            res.send(error_handling("yparxei xristi me auto to email"));
+        }
+        else if (await RegisterUser(name,birthday,email,password,phone)){
+            var id = await getUserid(email);
+            //await CreateRateToUser(id);
+           // console.log("registeruser id) :"+id);
+            res.send(success_handling(id));
+        }else{
+            res.send(error_handling("υπαρχει ηδη λογαριασμος με αυτο το μαιλ"));
+        }
+    } catch (error) {
+        res.send(error_handling(error+""));
+    }
+
+});
 
 function CreateRateToUser(user_id){
     return new Promise((resolve,reject)=>{
@@ -2063,8 +2105,7 @@ app.get('/uploadimage/:image', async (req,res) => {
 
  //app.use(bodyParser.urlencoded({extended: true}));
 
- app.use(bodyParser.json({limit: '50mb'}));
- app.use(bodyParser.urlencoded({limit: '50mb', extended: true}));
+ 
 
  app.post('/uploadimage/', async (req,res) => {
     /*if(!req.body){
