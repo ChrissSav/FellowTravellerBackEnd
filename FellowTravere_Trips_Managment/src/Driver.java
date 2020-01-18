@@ -30,7 +30,9 @@ public class Driver {
 		try {
 			myRes = myStm.executeQuery(q);
 			while(myRes.next()){
-				trip = new Trip( Integer.parseInt(myRes.getString("id")),myRes.getString("date"),myRes.getString("time"));
+				//trip = new Trip( Integer.parseInt(myRes.getString("id")),myRes.getString("date"),myRes.getString("time"));
+				trip = new Trip( Integer.parseInt(myRes.getString("id")),myRes.getString("date"),myRes.getString("time"),
+						Integer.parseInt(myRes.getString("max_seats")),Integer.parseInt(myRes.getString("current_num_of_seats")));
 				array.add(trip);
 			}
 			return array;
@@ -61,6 +63,7 @@ public class Driver {
 	}
 	
 	public boolean SetTripNotAvailable(int id){
+		System.out.print("Trips : "+id+ " state = 'unavailable' ");
 		String sql = "update trips set state = 'unavailable' where id = ? ";
 		try {
 			PreparedStatement pst = myConn.prepareStatement(sql);

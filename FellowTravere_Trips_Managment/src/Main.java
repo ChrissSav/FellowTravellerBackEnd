@@ -65,8 +65,10 @@ public class Main {
 		arrayOfAvailableTrips = driver.GetAllAvalableTrips();
 		//System.out.println(arrayOfAvailableTrips.size());
 		for(int i=0; i<arrayOfAvailableTrips.size(); i++){
+			Tripp(arrayOfAvailableTrips.get(i));
 			GetCurrentDate(arrayOfAvailableTrips.get(i).getId(),arrayOfAvailableTrips.get(i).getDate(),arrayOfAvailableTrips.get(i).getTime());
 		}
+		
 	}
 	
 	
@@ -85,6 +87,15 @@ public class Main {
 		} catch (ParseException e) {
 			e.printStackTrace();
 		}	   
+	}
+	
+	public static void Tripp(Trip trip){	
+		int current = trip.getCurrent_seats();
+		int max = trip.getMax_seats();
+		if(current>=max){
+			driver.SetTripNotAvailable(trip.getId());
+		}
+			   
 	}
 	
 	

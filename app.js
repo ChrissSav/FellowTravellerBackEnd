@@ -984,14 +984,105 @@ app.get('/gettripstakespart/:user_id',async  (req ,res) => {
     }
 });
 
+app.get('/getTripsStandBy/:user_id',async  (req ,res) => {
+    try {
+        var id = req.params.user_id;
+        var teliko=[];
 
+        var trips = await getTripsStand_by(id);
+        trips = JSON.parse(JSON.stringify(trips));
+        for (var i = 0; i < trips.length; i++) {
+            var currentTrip = new class_trip(trips[i]);
+            var creator = await getTripCreator(trips[i].id);
+            creator = JSON.parse(JSON.stringify(creator[0]));
+            creator = new class_user(creator);
+            currentTrip.setCreator(creator);
+            var date = currentTrip.getDate();
+            date = ChangeFromat(date);
+            currentTrip.setDate(date);
+            delete currentTrip.creator_id
+            teliko.push(currentTrip);
+        }
+        res.send(teliko);
+    } catch (error) {
+        res.send(error_handling(error+""));
+    }
+});
 
+app.post('/CancelTrip/',async  (req ,res) => {
+    try{
+        let user_id = req.body.user_id;
+        let creator_id = req.body.trip_creator_id;
+        let trip_id = req.body.trip_id;
+        console.log("user_id : "+user_id,",creator_id : "+creator_id,",trip_id : "+trip_id );
+        if(await DeleteNotification(creator_id,user_id,trip_id) && await DeleteRequest(user_id,trip_id)){
+            res.send(success_handling("jbhrghr"))
+        }else{
+            res.send(error_handling("00"))
+        }
+           
+    }catch(err){
+        res.send(error_handling("00"))
+    }
+    
+    
+});
 
+function DeleteRequest(creator_id,trip_id){
+    return new Promise((resolve,reject)=>{
+        
+        let q ="delete from request where creator_id = "+creator_id+" and trip_id = "+trip_id;
+        db.query(q,(err, result) => {
+            
+            if (err || result == 0){
+                console.log("DeleteRequest");
+                console.log(err);
+               resolve (false);
+            }
+            else{
+                resolve(true)
+            }
+        })
+    });
+}
+
+function DeleteNotification(target_id,user_id,trip_id){
+    return new Promise((resolve,reject)=>{
+        let q ="delete from notification where target_id = "+target_id
+                    +" and user_id = "+user_id+" and  trip_id = "+trip_id;
+        db.query(q,(err, result) => {
+            if (err || result == 0){
+                console.log("DeleteNotification")
+                console.log(err)
+                resolve (false);
+            }
+            else{
+                resolve(true)
+            }
+        })
+    });
+}
 function getTripsTakePart(id){
     return new Promise((resolve,reject)=>{
         let q ="select trips.* from users_and_trips "+
         " join trips on users_and_trips.trip_id = trips.id "+
         " where users_and_trips.user_id= "+id;
+        db.query(q,(err, result) => {
+            if (err || result == 0){
+               resolve ([]);
+            }
+            else{
+                resolve(result)
+            }
+        })
+    });
+}
+
+function getTripsStand_by(id){
+    return new Promise((resolve,reject)=>{
+        let q ="select   trips.* from trips join request on trips.id=request.trip_id"
+        +" where request.status='stand_by' and request.creator_id = "+id;
+        //console.log(q)
         db.query(q,(err, result) => {
             if (err || result == 0){
                resolve ([]);
