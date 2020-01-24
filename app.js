@@ -2219,6 +2219,10 @@ app.get('/uploadimage/:image', async (req,res) => {
     }else{
         res.send(error_handling("error"));
     }
+
+    
+
+
    // res.send(success_handling(req.body.icon))
     //console.log(req.body.bitmap)
     //console.log(req.body)
