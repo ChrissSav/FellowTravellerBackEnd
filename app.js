@@ -9,6 +9,7 @@ let class_user = require('./class_user');
 let class_rateItem = require('./class_rateItem');
 var bodyParser = require('body-parser')
 
+
 const db = mysql.createConnection({
     host: 'localhost',
     user: 'root',
@@ -1583,7 +1584,7 @@ function RegisterNotification(target_id,user_id,trip_id,type){
     console.log("RegisterNotification");
     console.log("target_id :"+target_id," user_id :"+user_id,trip_id,type);
     return new Promise((resolve,reject)=>{
-        db.query("insert into notification (target_id,user_id,trip_id,type) values (?,?,?,?)",
+        db.query("insert into notification (target_id,user_id,trip_id,type) values (?,?,?,?)", 
         [target_id,user_id,trip_id,type],(err, result) => {
             if (err || result == 0){
                 resolve (false);
@@ -2220,7 +2221,7 @@ app.get('/uploadimage/:image', async (req,res) => {
         res.send(error_handling("error"));
     }
 
-    
+
 
 
    // res.send(success_handling(req.body.icon))
