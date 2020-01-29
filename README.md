@@ -9,7 +9,6 @@
 ![83356545_267726064197306_4691553727025250304_n](https://user-images.githubusercontent.com/38664123/73221478-a727db00-4169-11ea-8be6-c5bc7a9d88be.png)
 
 
-<b>Βιβλιοθήκες</b>
+<b>Frameworks</b>
 - Node.js
 - Express.js
-- Mysql connector
